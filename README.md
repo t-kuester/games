@@ -7,17 +7,17 @@ files. All configuration is done via command line parameters.
 Minesweeper
 -----------
 Not much to say about this, everyone knows Minesweeper. What's special about 
-this version is that the field can have any size and any density of mine, both 
+this version is that the field can have any size and any density of mines, both 
 set with command line options. Also, there's an option to "auto-reveal" adjacent
 cells once a cell has enough surrounding mine markers, which makes playing the
 game much less tedious.
 
 Netwalk
 -------
-A clone of the KDE game "Netwalk", where you have to rotate each cell in a grid
+A clone of the KDE game "Netwalk", where each cell in a grid has to be rotated
 so that they connect to a single network, reaching each endpoint in the net.
 Besides allowing any grid size (e.g. 30x20 instead of the puny 8x8 or 16x16 or 
-whatever in the original), it also featurs a "toroid" mode, in which the grid
+whatever in the original), it also features a "toroid" mode, where the grid
 "wraps around" the edges, making the whole game much more difficult and interesting.
 
 Nonogram
@@ -33,17 +33,18 @@ Sokoban
 This one is actually quite good... as usual, it has a super-minimalistic UI, but
 it can read arbitrary Sokoban level files and keep a record of what level has been
 solved in how many moves. Also, it featurse some amount of "planning", not only
-for planning the path to a certain location, but also the "push-path" for moving
-a single crate to a new location. This does not make the puzzles any easier, but
-it makes the game much less tedious to play and more fun. Also features basic 
-undo and snapshot-taking.
+for finding the path to a certain location, but also for planning the "push-path" 
+for moving a single crate to a new location. This does not make the puzzles any 
+easier, but it makes the game much less tedious to play and more fun. Also 
+features basic undo and snapshot-taking. Levels are not included (didn't want 
+to bother with copyright stuff), but plenty can be found on the web.
 
 Sudoku
 ------
 While this one only comes with 50 pre-generated puzzles (taken from a Project 
-Euler problem concerned with Sudoku), it has some rather unique controls (as far
-as I know), in that the number that is entered in a cell is determined by the
-position where the mouse is pointed to in that cell: upper-left corresponds to 
-one, upper-right to three, centre to five, and so on. Also allows the user to
+Euler problem concerned with Sudoku), it has some (as far as I know) rather 
+unique controls, as the number that is entered in a cell is determined by the
+position where the mouse is pointed to in that cell: upper-left corresponds to
+one, upper-right to three, centre to five, and so on. Also allows the user to 
 set marker-numbers (either manually or automatically), to check and to solve
-the current riddle.
+the current puzzle.
