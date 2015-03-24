@@ -29,9 +29,9 @@ class MineField:
 		self.width = width
 		self.height = height
 		# create marks and mine field
-		self.marks = [[ CLOSED for y in range(height)] for x in range(width)]
-		self.mines = [[ random.random() < density for y in range(height)] 
-		                                          for x in range(width)]
+		self.marks = [[CLOSED for _ in range(height)] for _ in range(width)]
+		self.mines = [[random.random() < density for _ in range(height)] 
+		                                         for _ in range(width)]
 				
 	def print_mines(self):
 		"""Print a matrix to the console, showing the positions of the mines."""
@@ -42,14 +42,11 @@ class MineField:
 			
 	def print_marks(self):
 		"""Print a matrix to the console, showing the various marks."""
+		SYMBOLS = {CLOSED: ".", FLAG: "x", BOOM: "#", CLEAR: " "}
 		for y in range(self.height):
 			for x in range(self.width):
 				m = self.marks[x][y]
-				if   m == CLOSED: print ".",
-				elif m == FLAG:   print "x",
-				elif m == BOOM:   print "#",
-				elif m == CLEAR:  print " ",
-				else:             print m,
+				print SYMBOLS.get(m, m),
 			print ""
 
 	def reveal(self, x, y, autoreveal=True):

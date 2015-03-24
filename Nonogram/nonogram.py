@@ -14,7 +14,8 @@ makes it all the more interesting, as one can not just guess the picture).
 The size of the grid is determined with a command-line parameter, as well as 
 whether or not to show a 'crosshair'.
 
-Controls: left-click: mark as filled; right-click: mark as empty.
+Mouse-Controls: left-click: mark as filled; right-click: mark as empty.
+Keyboard-Controls (only w/ cross-hair ): Arrow keys: move, f/e: mark full/empty
 """
 
 import Tkinter, random
@@ -31,7 +32,7 @@ class Nonogram(object):
 		@param size: both width and height of field (int)
 		"""
 		self.size = size
-		self.field = [[random.randint(0, 1) for x in range(size)] for y in range(size)]
+		self.field = [[random.randint(0, 1) for _ in range(size)] for _ in range(size)]
 
 	def line_code(self, line_no):
 		"""Return hint for line.
@@ -120,6 +121,7 @@ class NonogramFrame(Tkinter.Frame):
 			self.reveal_cell(col, line, event.num == 1)
 			
 	def reveal_cell(self, col, line, black=True):
+		"""Reveal cell at the given position."""
 		try:			
 			value = self.game.field[line][col]
 			if value != -1:
@@ -139,11 +141,13 @@ class NonogramFrame(Tkinter.Frame):
 
 	def draw_cross_event(self, event):
 		"""Relocate cross hair to current mouse position and highlight hint
-		codes for respective line and column."""
+		codes for respective line and column.
+		"""
 		x, y = event.x, event.y, 
 		self.draw_cross(x, y)
 		
 	def draw_cross(self, x, y):
+		"""Draw cross hair in the specified location."""
 		s = self.size * self.space
 		# draw cross hair
 		self.canvas.coords(self.line_x, x, 0, x, s)
@@ -162,12 +166,13 @@ class NonogramFrame(Tkinter.Frame):
 			pass	
 		
 	def keyboard_control(self, event):
-		"""Listen to key events and move the crosshair and reveal cells accordingly."""
+		"""Listen to key events and move the crosshair and reveal cells."""
 		if event.keysym == "q":
 			exit()
 		if event.keysym == "n":
 			self.new_game()
-		directions = {"Right": (+1,0), "Left": (-1,0), "Up": (0,-1), "Down": (0,+1)}
+		directions = {"Right": (+1, 0), "Left": (-1, 0), 
+		              "Up": (0,-1), "Down": (0, +1)}
 		if event.keysym in directions:
 			dx, dy = directions[event.keysym]
 			minmax = lambda n: min(self.size-1, max(n, 0))
