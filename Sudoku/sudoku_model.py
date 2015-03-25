@@ -67,14 +67,14 @@ class Sudoku:
 	"""
 	
 	def __init__(self, lines):
-		self.cells = [ [Cell(value) for value in line] for line in lines]
+		self.cells = [[Cell(value) for value in line] for line in lines]
 		self.groups = []
 		for i in range(9):
 			row = Group(self.cells[i])
 			col = Group([self.cells[k][i] for k in range(9)])
 			self.groups.append(row)
 			self.groups.append(col)
-		for i, k in [ (3*i, 3*k) for i in range(3) for k in range(3)]:
+		for i, k in ((3*i, 3*k) for i in range(3) for k in range(3)):
 			sqr = Group([self.cells[i+n][k+m] for n in range(3) for m in range(3)])
 			self.groups.append(sqr)
 
@@ -128,30 +128,18 @@ def load_game(number=None):
 
 	# open file, define some helper fields
 	with open(GRIDS_FILE) as f:
-		header = "Grid %s%d" % ("" if number > 9 else "0", number)
-		def get_line():
-			line = f.readline()
-			return line[:-2] if line[-2:] == "\r\n" else line
-
 		# search file for grid, create game
-		sudoku = None
-		line = get_line()
-		while line:
-		
-			if line == header:
+		header = "Grid %s%d" % ("" if number > 9 else "0", number)
+		for line in f:
+			if line.strip() == header:
 				# grid found!
 				print "Loading Grid No.%d" % number
-				lines = [ [int(c) for c in get_line()] for i in range(9)]
-				sudoku = Sudoku(lines)
-				break
-		
-			line = get_line()
-	return sudoku
-
+				lines = [[int(c) for c in next(f).strip()] for _ in range(9)]
+				return Sudoku(lines)
 
 # Test
 if __name__ == "__main__":
-	sudoku = load_game(1)
+	sudoku = load_game(42)
 	print sudoku
 	if sudoku:
 		sudoku.solve()

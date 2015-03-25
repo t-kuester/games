@@ -12,7 +12,7 @@ Controls:
 - arrow keys to wrap the grid around the edges (in toroid mode)
 """
 
-from netwalk import *
+from netwalk import Network
 import Tkinter
 
 # some helper functions

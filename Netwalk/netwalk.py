@@ -91,7 +91,7 @@ class Network:
 		"""
 		for line in self.nodes:
 			for node in line:
-				for i in range(random.randint(0, 3)):
+				for _ in range(random.randint(0, 3)):
 					node.rotate()
 
 	def check(self):
