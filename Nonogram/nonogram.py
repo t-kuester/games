@@ -18,7 +18,7 @@ Mouse-Controls: left-click: mark as filled; right-click: mark as empty.
 Keyboard-Controls (only w/ cross-hair ): Arrow keys: move, f/e: mark full/empty
 """
 
-import Tkinter, random
+import Tkinter, random, itertools
 
 class Nonogram(object):
 	"""Nonogram Data Class.
@@ -48,14 +48,9 @@ class Nonogram(object):
 		column = [line[column_no] for line in self.field]
 		return self.sequence_code(column)
 
-	def sequence_code(self, sequence, cur=0):
-		"""Recursively create hint for given sequence."""
-		if not sequence:
-			return [cur] if cur else []
-		elif sequence[0]:
-			return self.sequence_code(sequence[1:], cur+1)
-		else:
-			return ([cur] if cur else []) + self.sequence_code(sequence[1:], 0)
+	def sequence_code(self, sequence):
+		"""Create hint for given sequence."""
+		return [sum(g) for k, g in itertools.groupby(sequence) if k == 1]
 
 
 class NonogramFrame(Tkinter.Frame):
@@ -77,9 +72,12 @@ class NonogramFrame(Tkinter.Frame):
 		self.grid()
 		self.size, self.space = size, space
 		self.game = None
+		self.bind_all("q", lambda e: self.quit())
+		
 		# create button
 		button = Tkinter.Button(self, text="NEW", relief="groove", command=self.new_game)
 		button.grid(row=0, column=0)
+		
 		# create labels
 		self.columns, self.rows = [], []
 		for n in xrange(size):
@@ -87,6 +85,7 @@ class NonogramFrame(Tkinter.Frame):
 			self.rows[n].grid(row=n+1, column=0, sticky="E")
 			self.columns += [Tkinter.Label(self)]
 			self.columns[n].grid(row=0, column=n+1, sticky="S")
+		
 		# create central field
 		self.canvas = Tkinter.Canvas(self, width=space*size, height=space*size, bg="#a0a0a0")
 		self.canvas.grid(row=1, column=1, rowspan=size, columnspan=size)
@@ -94,12 +93,13 @@ class NonogramFrame(Tkinter.Frame):
 		for n in xrange(size):
 			self.canvas.create_line(0, space*n, space*size, space*n)
 			self.canvas.create_line(space*n, 0, space*n, space*size)
+		
 		# create crosshair?
 		if cross:
 			self.last_highlighted = (self.rows[0], self.columns[0])
 			self.line_x = self.canvas.create_line(0, 0, 0, space*size, fill="blue", tags="cross")
 			self.line_y = self.canvas.create_line(0, 0, space*size, 0, fill="blue", tags="cross")
-			self.canvas.bind("<Motion>", self.draw_cross_event)
+			self.canvas.bind("<Motion>", lambda e: self.draw_cross(e.x, e.y))
 			self.bind_all("<KeyRelease>", self.keyboard_control)
 			self.x = self.y = 0
 		self.new_game()
@@ -139,15 +139,10 @@ class NonogramFrame(Tkinter.Frame):
 		except IndexError:
 			pass
 
-	def draw_cross_event(self, event):
+	def draw_cross(self, x, y):
 		"""Relocate cross hair to current mouse position and highlight hint
 		codes for respective line and column.
 		"""
-		x, y = event.x, event.y, 
-		self.draw_cross(x, y)
-		
-	def draw_cross(self, x, y):
-		"""Draw cross hair in the specified location."""
 		s = self.size * self.space
 		# draw cross hair
 		self.canvas.coords(self.line_x, x, 0, x, s)
