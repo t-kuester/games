@@ -18,7 +18,7 @@ Mouse-Controls: left-click: mark as filled; right-click: mark as empty.
 Keyboard-Controls (only w/ cross-hair ): Arrow keys: move, f/e: mark full/empty
 """
 
-import Tkinter, random, itertools
+import tkinter, random, itertools
 
 class Nonogram(object):
 	"""Nonogram Data Class.
@@ -53,7 +53,7 @@ class Nonogram(object):
 		return [sum(g) for k, g in itertools.groupby(sequence) if k == 1]
 
 
-class NonogramFrame(Tkinter.Frame):
+class NonogramFrame(tkinter.Frame):
 	"""Application Frame for Nonogram Game.
 
 	The Nonogram Frame shows the field and the line- and column hints. Also, the
@@ -67,7 +67,7 @@ class NonogramFrame(Tkinter.Frame):
 		@param space:     size of one cell in pixels (int)
 		@param cross:     draw crosshair? (bool)
 		"""
-		Tkinter.Frame.__init__(self, master)
+		tkinter.Frame.__init__(self, master)
 		self.master.title("Nonogram")
 		self.grid()
 		self.size, self.space = size, space
@@ -75,22 +75,22 @@ class NonogramFrame(Tkinter.Frame):
 		self.bind_all("q", lambda e: self.quit())
 		
 		# create button
-		button = Tkinter.Button(self, text="NEW", relief="groove", command=self.new_game)
+		button = tkinter.Button(self, text="NEW", relief="groove", command=self.new_game)
 		button.grid(row=0, column=0)
 		
 		# create labels
 		self.columns, self.rows = [], []
-		for n in xrange(size):
-			self.rows += [ Tkinter.Label(self) ]
+		for n in range(size):
+			self.rows += [tkinter.Label(self)]
 			self.rows[n].grid(row=n+1, column=0, sticky="E")
-			self.columns += [Tkinter.Label(self)]
+			self.columns += [tkinter.Label(self)]
 			self.columns[n].grid(row=0, column=n+1, sticky="S")
 		
 		# create central field
-		self.canvas = Tkinter.Canvas(self, width=space*size, height=space*size, bg="#a0a0a0")
+		self.canvas = tkinter.Canvas(self, width=space*size, height=space*size, bg="#a0a0a0")
 		self.canvas.grid(row=1, column=1, rowspan=size, columnspan=size)
 		self.canvas.bind("<Button>", self.reveal_cell_event)
-		for n in xrange(size):
+		for n in range(size):
 			self.canvas.create_line(0, space*n, space*size, space*n)
 			self.canvas.create_line(space*n, 0, space*n, space*size)
 		
@@ -107,7 +107,7 @@ class NonogramFrame(Tkinter.Frame):
 	def new_game(self):
 		"""Start new game."""
 		self.game = Nonogram(self.size)
-		for n in xrange(self.size):
+		for n in range(self.size):
 			line_code = map(str, self.game.line_code(n))
 			self.rows[n]["text"] = " ".join(line_code)
 			column_code = map(str, self.game.column_code(n))
@@ -117,7 +117,7 @@ class NonogramFrame(Tkinter.Frame):
 	def reveal_cell_event(self, event):
 		"""Reveal cell where the mouse has been clicked."""
 		if self.game and (event.num == 1 or event.num == 3):
-			col, line = event.x / self.space, event.y / self.space
+			col, line = event.x // self.space, event.y // self.space
 			self.reveal_cell(col, line, event.num == 1)
 			
 	def reveal_cell(self, col, line, black=True):

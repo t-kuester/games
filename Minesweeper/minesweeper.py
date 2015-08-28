@@ -9,7 +9,7 @@ Yet another 'Mine Sweeper' clone. Minimalistic, clean, easy to modify.
 - 'auto reveal' mode automatically opens neighbors when cell has enough mines
 """
 
-import Tkinter
+import tkinter
 import random
 
 BOOM, FLAG, CLOSED, CLEAR = -3, -2, -1, 0
@@ -37,8 +37,8 @@ class MineField:
 		"""Print a matrix to the console, showing the positions of the mines."""
 		for y in range(self.height):
 			for x in range(self.width):
-				print "#" if self.mines[x][y] else ".",
-			print ""
+				print("#" if self.mines[x][y] else ".", end="")
+			print("")
 			
 	def print_marks(self):
 		"""Print a matrix to the console, showing the various marks."""
@@ -46,8 +46,8 @@ class MineField:
 		for y in range(self.height):
 			for x in range(self.width):
 				m = self.marks[x][y]
-				print SYMBOLS.get(m, m),
-			print ""
+				print(SYMBOLS.get(m, m), end="")
+			print("")
 
 	def reveal(self, x, y, autoreveal=True):
 		"""Reveal the cell at the given coordinate. Return True, if it did not
@@ -96,17 +96,17 @@ class MineField:
 		"""Get valid neighbor cells for given cell."""
 		x_1, x_2 = max(x-1, 0), min(x+1, self.width-1)
 		y_1, y_2 = max(y-1, 0), min(y+1, self.height-1)
-		return [ (n, m) for n in range(x_1, x_2+1) 
-		                for m in range(y_1, y_2+1) if x != n or y != m]
+		return [(n, m) for n in range(x_1, x_2+1) 
+		               for m in range(y_1, y_2+1) if x != n or y != m]
 		                
 	def get_mines(self):
 		"""Return positions of all the mines."""
-		return ( (x, y) for x in range(self.width)
-		                for y in range(self.height) if self.mines[x][y])
+		return ((x, y) for x in range(self.width)
+		               for y in range(self.height) if self.mines[x][y])
 		
 
 
-class MineFrame(Tkinter.Frame):
+class MineFrame(tkinter.Frame):
 	"""Application Frame for Minesweeper game.
 	
 	The Frame is on purpose absolutely minimalistic. It features only the mine
@@ -118,7 +118,7 @@ class MineFrame(Tkinter.Frame):
 		"""Create Application Frame. The parameters are passed right through to
 		the Mine game object.
 		"""
-		Tkinter.Frame.__init__(self, None)
+		tkinter.Frame.__init__(self, None)
 		self.master.title("Minesweeper")
 		self.grid()
 		self.width, self.height, self.side = width, height, side
@@ -126,10 +126,10 @@ class MineFrame(Tkinter.Frame):
 		self.auto = autoreveal
 		self.game = None
 		# create button
-		button = Tkinter.Button(self, text="NEW", relief="groove", command=self.new_game)
+		button = tkinter.Button(self, text="NEW", relief="groove", command=self.new_game)
 		button.grid(row=0, column=0)
 		# create mine field
-		self.canvas = Tkinter.Canvas(self, width=width*side, height=height*side, bg="white")
+		self.canvas = tkinter.Canvas(self, width=width*side, height=height*side, bg="white")
 		self.canvas.grid(row=1, column=0)
 		self.canvas.bind("<Button>", self.reveal_cell)
 		self.new_game()
@@ -143,7 +143,7 @@ class MineFrame(Tkinter.Frame):
 		"""Reveal cell where the mouse has been clicked."""
 		if self.game and (event.num == 1 or event.num == 3):
 			try:			
-				x, y = event.x / self.side, event.y / self.side
+				x, y = event.x // self.side, event.y // self.side
 				if event.num == 1:
 					self.game.reveal(x, y, self.auto)
 				elif event.num == 3:
@@ -158,7 +158,7 @@ class MineFrame(Tkinter.Frame):
 		marker, the game is set to gameover and the remaining mines are drawn.
 		"""
 		coords = lambda col, line: (self.side * col, self.side * line)
-		s, s2, s4 = (self.side / x for x in (1, 2, 4))
+		s, s2, s4 = (self.side // x for x in (1, 2, 4))
 		if self.game:
 			self.canvas.delete("all")
 			gameover = False
@@ -208,4 +208,3 @@ if __name__ == "__main__":
 	else:
 		app = MineFrame(density, width, height, 20, options.auto)
 		app.mainloop()
-
