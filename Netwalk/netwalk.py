@@ -12,7 +12,7 @@ around at the edges, making the entire game much harder and more interesting.
 import random
 
 # sides as complex numbers: east, south, west, north
-SIDES = [ 1+0j, 0+1j, -1+0j, 0-1j ]
+SIDES = [1+0j, 0+1j, -1+0j, 0-1j]
 
 class Node:
 	"""Class representing one Node in the Network. The node has a coordinate and
@@ -53,7 +53,7 @@ class Network:
 		self.toroid = toroid
 		
 		# create initial field
-		self.nodes = [[ None for x in range(width)] for y in range(height)]
+		self.nodes = [[None for x in range(width)] for y in range(height)]
 		remaining = [(x, y) for x in range(width) for y in range(height)]
 		for (x, y) in remaining:
 			self.nodes[y][x] = Node(x, y)

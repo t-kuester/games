@@ -18,7 +18,8 @@ What this does not:
 - generate new random games
 """
 
-import Tkinter, tkFont
+import tkinter
+import tkinter.font
 import sudoku_model
 
 SIDE = 36
@@ -26,12 +27,12 @@ FONT_FAMILY = "Arial"
 FONT_VALUE  = None
 FONT_MARKER = None
 
-class Field(Tkinter.Canvas):
+class Field(tkinter.Canvas):
 	"""Canvas element for displaying and controlling a single Cell in the Sudoku.
 	"""
 
 	def __init__(self, master, cell):
-		Tkinter.Canvas.__init__(self, master, width=SIDE, height=SIDE, bg="white")
+		tkinter.Canvas.__init__(self, master, width=SIDE, height=SIDE, bg="white")
 		self.cell = cell
 		self.update()
 		if not self.cell.fixed:
@@ -43,8 +44,8 @@ class Field(Tkinter.Canvas):
 		RMB toggles a marker, CMB unsets the value.
 		"""
 		# get number
-		col  = min(3 * event.x / SIDE, 2)
-		line = min(3 * event.y / SIDE, 2)
+		col  = min(3 * event.x // SIDE, 2)
+		line = min(3 * event.y // SIDE, 2)
 		value = line * 3 + col + 1
 		if event.num == 1:
 			# set value
@@ -71,42 +72,39 @@ class Field(Tkinter.Canvas):
 		else:
 			# draw markers
 			for n in filter(lambda n: self.cell.markers[n], range(1, 9 + 1)):
-				x = SIDE/6 + ((n-1) % 3) * SIDE/3
-				y = SIDE/6 + ((n-1) / 3) * SIDE/3
+				x = SIDE//6 + ((n-1) %  3) * SIDE//3
+				y = SIDE//6 + ((n-1) // 3) * SIDE//3
 				self.create_text(x, y, text=str(n), font=FONT_MARKER, fill="blue")
 
 
-class SudokuFrame(Tkinter.Frame):
+class SudokuFrame(tkinter.Frame):
 	"""Tkinter-Frame for displaying and playing a game of Sudoku.
 	"""
 
 	def __init__(self, master=None, grid_no=None):
-		Tkinter.Frame.__init__(self, master)
+		tkinter.Frame.__init__(self, master)
 		self.master.title("Sudoku")
 		self.grid()
 		self.game = sudoku_model.load_game(grid_no)
 		
 		# create fonts
 		global FONT_VALUE, FONT_MARKER
-		FONT_VALUE  = tkFont.Font(family=FONT_FAMILY, size=3*SIDE/4)
-		FONT_MARKER = tkFont.Font(family=FONT_FAMILY, size=  SIDE/4)
+		FONT_VALUE  = tkinter.font.Font(family=FONT_FAMILY, size=3*SIDE//4)
+		FONT_MARKER = tkinter.font.Font(family=FONT_FAMILY, size=  SIDE//4)
 				
 		# create buttons panel
-		buttons = Tkinter.Canvas(self)
+		buttons = tkinter.Canvas(self)
 		buttons.grid(row=0, column=0, columnspan=3)
-		button = Tkinter.Button(buttons, text="Markers", command=self.markers)
-		button.grid(row=0, column=0)
-		button = Tkinter.Button(buttons, text="Check", command=self.check)
-		button.grid(row=0, column=1)
-		button = Tkinter.Button(buttons, text="Solve", command=self.solve)
-		button.grid(row=0, column=2)
+		tkinter.Button(buttons, text="Markers", command=self.markers).grid(row=0, column=0)
+		tkinter.Button(buttons, text="Check", command=self.check).grid(row=0, column=1)
+		tkinter.Button(buttons, text="Solve", command=self.solve).grid(row=0, column=2)
 		
 		# create cells
 		self.fields = []
-		for gx, gy in [(x, y) for x in range(3) for y in range(3)]:
-			group = Tkinter.Canvas(self, bg="black")
+		for gx, gy in ((x, y) for x in range(3) for y in range(3)):
+			group = tkinter.Canvas(self, bg="black")
 			group.grid(row=gy+1, column=gx, ipadx=2, ipady=2)
-			for c, r in [(x, y) for x in range(3) for y in range(3)]:
+			for c, r in ((x, y) for x in range(3) for y in range(3)):
 				cell = self.game.cells[gy*3 + r][gx*3 + c]
 				field = Field(group, cell)
 				field.grid(row=r, column=c, padx=1, pady=1)
@@ -150,4 +148,3 @@ if __name__ == "__main__":
 	else:
 		app = SudokuFrame(None, grid_no)
 		app.mainloop()
-

@@ -13,7 +13,7 @@ Controls:
 """
 
 from netwalk import Network
-import Tkinter
+import tkinter
 
 # some helper functions
 col_fg = lambda node: "blue" if node.connected else "black"
@@ -22,7 +22,7 @@ tag_fg = lambda node: "f%dx%d" % (node.x, node.y)
 tag_bg = lambda node: "b%dx%d" % (node.x, node.y)
 
 
-class NetwalkFrame(Tkinter.Frame):
+class NetwalkFrame(tkinter.Frame):
 	"""Application Frame for Netwalk game.
 	
 	This frame consists of just two buttons for creating and re-scrambling the
@@ -33,7 +33,7 @@ class NetwalkFrame(Tkinter.Frame):
 	def __init__(self, width=10, height=10, side=20, toroid=False):
 		"""Create Application Frame.
 		"""
-		Tkinter.Frame.__init__(self, None)
+		tkinter.Frame.__init__(self, None)
 		self.master.title("Netwalk")
 		self.grid()
 		self.width, self.height, self.side = width, height, side
@@ -42,11 +42,11 @@ class NetwalkFrame(Tkinter.Frame):
 		self.game = None
 		
 		# create button
-		button = Tkinter.Button(self, text="NEW", relief="groove", command=self.new_game)
+		button = tkinter.Button(self, text="NEW", relief="groove", command=self.new_game)
 		button.grid(row=0, column=0)
 		
 		# create network field
-		self.canvas = Tkinter.Canvas(self, width=width*side, height=height*side, bg="white")
+		self.canvas = tkinter.Canvas(self, width=width*side, height=height*side, bg="white")
 		self.canvas.grid(row=1, column=0)
 		self.canvas.bind("<Button>", self.interact)
 		self.bind_all("<KeyPress>", self.shift)
@@ -64,8 +64,8 @@ class NetwalkFrame(Tkinter.Frame):
 		"""Interact with the clicked Node, either rotating or (un)fixing the node.
 		"""
 		if 1 <= event.num <= 3:
-			col = (event.x / self.side - self.shift_h) % self.width
-			row = (event.y / self.side - self.shift_v) % self.height
+			col = (event.x // self.side - self.shift_h) % self.width
+			row = (event.y // self.side - self.shift_v) % self.height
 			node = self.game.nodes[row][col]
 			if event.num == 2:
 				node.fixed = not node.fixed
@@ -177,4 +177,3 @@ if __name__ == "__main__":
 	else:
 		app = NetwalkFrame(width, height, 30, options.toroid)
 		app.mainloop()
-		

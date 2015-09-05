@@ -38,9 +38,9 @@ class Cell:
 		if self.value == 0:
 			return True
 		else:
-			all_others = reduce(lambda l1, l2: l1 + l2, [g.cells for g in self.groups])
+			all_others = [cell for group in self.groups for cell in group.cells]
 			return not any(other.value == self.value
-			                           for other in all_others if other != self)
+			               for other in all_others if other != self)
 
 
 class Group:
@@ -53,7 +53,7 @@ class Group:
 			cell.add_to_group(self)
 
 	def __str__(self):
-		return str([str(cell) for cell in self.cells])
+		return str(self.cells)
 		
 	def has_value(self, value):
 		"""Check whether the given value is already assigned to any of the Cells
@@ -133,14 +133,14 @@ def load_game(number=None):
 		for line in f:
 			if line.strip() == header:
 				# grid found!
-				print "Loading Grid No.%d" % number
+				print("Loading Grid No.%d" % number)
 				lines = [[int(c) for c in next(f).strip()] for _ in range(9)]
 				return Sudoku(lines)
 
 # Test
 if __name__ == "__main__":
 	sudoku = load_game(42)
-	print sudoku
+	print(sudoku)
 	if sudoku:
 		sudoku.solve()
-		print sudoku
+		print(sudoku)
