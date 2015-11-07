@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 """Sudoku Game
 by Tobias Kuester, <tobias.kuester@gmx.net>, 2011

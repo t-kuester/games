@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 """Nonogram
 by Tobias Kuester, <tobias.kuester@gmx.net>, 2010
