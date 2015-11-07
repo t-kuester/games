@@ -149,7 +149,7 @@ class NonogramFrame(tkinter.Frame):
 		self.canvas.coords(self.line_y, 0, y, s, y)
 		# highlight respective line codes
 		try:
-			column, row = self.columns[x/self.space], self.rows[y/self.space]
+			column, row = self.columns[x//self.space], self.rows[y//self.space]
 			if self.last_highlighted != (row, column):
 				(last_row, last_column) = self.last_highlighted
 				last_column.config(fg="black")
