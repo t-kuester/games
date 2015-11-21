@@ -53,6 +53,14 @@ class Nonogram(object):
 		return [sum(g) for k, g in itertools.groupby(sequence) if k == 1]
 
 
+COL_BKGR = "#888"
+COL_CRSS = "#00f"
+COL_FILL = "#000"
+COL_EMP  = "#fff"
+COL_FILX = "#f88"
+COL_EMPX = "#800"
+OFFSET   = 2
+
 class NonogramFrame(tkinter.Frame):
 	"""Application Frame for Nonogram Game.
 
@@ -87,7 +95,7 @@ class NonogramFrame(tkinter.Frame):
 			self.columns[n].grid(row=0, column=n+1, sticky="S")
 		
 		# create central field
-		self.canvas = tkinter.Canvas(self, width=space*size, height=space*size, bg="#a0a0a0")
+		self.canvas = tkinter.Canvas(self, width=space*size, height=space*size, bg=COL_BKGR)
 		self.canvas.grid(row=1, column=1, rowspan=size, columnspan=size)
 		self.canvas.bind("<Button>", self.reveal_cell_event)
 		for n in range(size):
@@ -97,8 +105,8 @@ class NonogramFrame(tkinter.Frame):
 		# create crosshair?
 		if cross:
 			self.last_highlighted = (self.rows[0], self.columns[0])
-			self.line_x = self.canvas.create_line(0, 0, 0, space*size, fill="blue", tags="cross")
-			self.line_y = self.canvas.create_line(0, 0, space*size, 0, fill="blue", tags="cross")
+			self.line_x = self.canvas.create_line(0, 0, 0, space*size, fill=COL_CRSS, tags="cross")
+			self.line_y = self.canvas.create_line(0, 0, space*size, 0, fill=COL_CRSS, tags="cross")
 			self.canvas.bind("<Motion>", lambda e: self.draw_cross(e.x, e.y))
 			self.bind_all("<KeyRelease>", self.keyboard_control)
 			self.x = self.y = 0
@@ -126,13 +134,12 @@ class NonogramFrame(tkinter.Frame):
 			value = self.game.field[line][col]
 			if value != -1:
 				if black:
-					color = "black" if value else "#faa"
+					color = COL_FILL if value else COL_FILX
 				else:
-					color = "white" if not value else "#800"
-				offset = 2
-				x, y = self.space*col+offset, self.space*line+offset
-				s = self.space-2*offset
-				last = self.canvas.create_rectangle(x, y, x+s, y+s, 
+					color = COL_EMP if not value else COL_EMPX
+				x, y = self.space * col + OFFSET, self.space * line + OFFSET
+				s = self.space - 2 * OFFSET
+				last = self.canvas.create_rectangle(x, y, x + s, y + s, 
 													tags="cell", fill=color)
 				self.canvas.tag_raise("cross", last)
 				self.game.field[line][col] = -1
@@ -152,10 +159,10 @@ class NonogramFrame(tkinter.Frame):
 			column, row = self.columns[x//self.space], self.rows[y//self.space]
 			if self.last_highlighted != (row, column):
 				(last_row, last_column) = self.last_highlighted
-				last_column.config(fg="black")
-				last_row.config(fg="black")
-				column.config(fg="blue")
-				row.config(fg="blue")
+				last_column.config(fg="#000")
+				last_row.config(fg="#000")
+				column.config(fg=COL_CRSS)
+				row.config(fg=COL_CRSS)
 				self.last_highlighted = (row, column)
 		except IndexError:
 			pass	
@@ -188,7 +195,7 @@ if __name__ == "__main__":
 
 	try:
 		size = int(args[0]) if args else 10
-		if not 5 < size < 50:
+		if not 5 <= size <= 50:
 			raise ValueError
 	except ValueError:
 		parser.error("Size must be a number between 5 and 50")
