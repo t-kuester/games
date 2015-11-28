@@ -54,7 +54,8 @@ class Nonogram(object):
 
 
 COL_BKGR = "#888"
-COL_CRSS = "#00f"
+COL_CRSS = "#aaa"
+COL_HINT = "#0a0"
 COL_FILL = "#000"
 COL_EMP  = "#fff"
 COL_FILX = "#f88"
@@ -98,18 +99,21 @@ class NonogramFrame(tkinter.Frame):
 		self.canvas = tkinter.Canvas(self, width=space*size, height=space*size, bg=COL_BKGR)
 		self.canvas.grid(row=1, column=1, rowspan=size, columnspan=size)
 		self.canvas.bind("<Button>", self.reveal_cell_event)
-		for n in range(size):
-			self.canvas.create_line(0, space*n, space*size, space*n)
-			self.canvas.create_line(space*n, 0, space*n, space*size)
 		
 		# create crosshair?
 		if cross:
 			self.last_highlighted = (self.rows[0], self.columns[0])
-			self.line_x = self.canvas.create_line(0, 0, 0, space*size, fill=COL_CRSS, tags="cross")
-			self.line_y = self.canvas.create_line(0, 0, space*size, 0, fill=COL_CRSS, tags="cross")
+			self.line_x = self.canvas.create_rectangle(0, 0, space, space*size, fill=COL_CRSS, tags="cross")
+			self.line_y = self.canvas.create_rectangle(0, 0, space*size, space, fill=COL_CRSS, tags="cross")
 			self.canvas.bind("<Motion>", lambda e: self.draw_cross(e.x, e.y))
 			self.bind_all("<KeyRelease>", self.keyboard_control)
 			self.x = self.y = 0
+		
+		# draw grid	
+		for n in range(size):
+			self.canvas.create_line(0, space*n, space*size, space*n)
+			self.canvas.create_line(space*n, 0, space*n, space*size)
+		
 		self.new_game()
 
 	def new_game(self):
@@ -133,15 +137,11 @@ class NonogramFrame(tkinter.Frame):
 		try:			
 			value = self.game.field[line][col]
 			if value != -1:
-				if black:
-					color = COL_FILL if value else COL_FILX
-				else:
-					color = COL_EMP if not value else COL_EMPX
+				color = [[COL_EMP, COL_EMPX], [COL_FILX, COL_FILL]][black][value]
 				x, y = self.space * col + OFFSET, self.space * line + OFFSET
 				s = self.space - 2 * OFFSET
 				last = self.canvas.create_rectangle(x, y, x + s, y + s, 
 													tags="cell", fill=color)
-				self.canvas.tag_raise("cross", last)
 				self.game.field[line][col] = -1
 		except IndexError:
 			pass
@@ -150,22 +150,22 @@ class NonogramFrame(tkinter.Frame):
 		"""Relocate cross hair to current mouse position and highlight hint
 		codes for respective line and column.
 		"""
-		s = self.size * self.space
-		# draw cross hair
-		self.canvas.coords(self.line_x, x, 0, x, s)
-		self.canvas.coords(self.line_y, 0, y, s, y)
-		# highlight respective line codes
 		try:
-			column, row = self.columns[x//self.space], self.rows[y//self.space]
+			c, r = x//self.space, y//self.space
+			column, row = self.columns[c], self.rows[r]
 			if self.last_highlighted != (row, column):
-				(last_row, last_column) = self.last_highlighted
-				last_column.config(fg="#000")
-				last_row.config(fg="#000")
-				column.config(fg=COL_CRSS)
-				row.config(fg=COL_CRSS)
+				# draw cross hair
+				s = self.space
+				self.canvas.coords(self.line_x, c * s, 0, c * s + s, s * self.size)
+				self.canvas.coords(self.line_y, 0, r * s, s * self.size, r * s + s)
+				# highlight respective line codes
+				for label in self.last_highlighted:
+					label.config(fg="#000")
+				for label in (column, row):
+					label.config(fg=COL_HINT)
 				self.last_highlighted = (row, column)
 		except IndexError:
-			pass	
+			pass
 		
 	def keyboard_control(self, event):
 		"""Listen to key events and move the crosshair and reveal cells."""
