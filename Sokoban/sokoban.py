@@ -11,7 +11,8 @@ The game model provides basic functionality for movement and for pushing boxes,
 for path planning and for planning to push a box to a given location.
 """
 
-import collections
+import collections # remove
+import heapq
 
 WALL        = '#'
 PLAYER      = '@'
@@ -45,7 +46,7 @@ def load_levels(filename):
 	"""
 	with open(filename) as levelfile:
 		levels = [[]]
-		for line in levelfile.read().splitlines():
+		for line in levelfile:
 			if line.lstrip().startswith(WALL):
 				levels[-1].append(line)
 			elif levels[-1]:
@@ -63,18 +64,23 @@ def set_state(state, position, symbol):
 	row, col = position
 	state[row][col] = symbol
 
-def find_path(state, start, goal):
-	"""Try to find a path from start to goal in the given state. This is
-	a more general version of SokobanGame.find_path, that can also be
-	applied for "future" states in SokobanGame.plan_push.
-	"""
-	# initialize queue and set of visited states
-	queue = collections.deque([(start, [])])
-	visited = set()
+def distance(start, goal):
+	(sr, sc), (gr, gc) = start, goal
+	return abs(sr - gr) + abs(sc - gc)
 
+def find_path(state, start, goal):
+	"""Try to find a path from start to goal in the given state, using
+	A* search. This is a more general version of SokobanGame.find_path,
+	that can also be applied for "future" states in SokobanGame.plan_push. 
+	"""
+	# initialize queue and set of visited states; using (g+h, h) as tie breaker
+	g, h = 0, distance(start, goal)
+	queue = [((g+h, h), start, [])]
+	visited = set()
+	
 	while queue:
 		# pop state, check whether already visited or goal
-		(r, c), path = queue.popleft()
+		_, (r, c), path = heapq.heappop(queue)
 		if (r, c) in visited:
 			continue
 		visited.add((r, c))
@@ -84,7 +90,9 @@ def find_path(state, start, goal):
 		# expand neighbor states
 		for dr, dc in ((0, +1), (0, -1), (-1, 0), (+1, 0)):
 			if is_free(state[r + dr][c + dc]):
-				queue.append(((r + dr, c + dc), path + [(dr, dc)]))
+				new_pos = (r + dr, c + dc)
+				g, h = len(path) + 1, distance(new_pos, goal)
+				heapq.heappush(queue, ((g+h, h), new_pos, path + [(dr, dc)]))
 	return None
 
 
