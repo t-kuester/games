@@ -111,8 +111,9 @@ class NonogramFrame(tkinter.Frame):
 		
 		# draw grid	
 		for n in range(size):
-			self.canvas.create_line(0, space*n, space*size, space*n)
-			self.canvas.create_line(space*n, 0, space*n, space*size)
+			w = 2 if n % 5 == 0 else 1
+			self.canvas.create_line(0, space*n, space*size, space*n, width=w)
+			self.canvas.create_line(space*n, 0, space*n, space*size, width=w)
 		
 		self.new_game()
 
