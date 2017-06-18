@@ -103,7 +103,13 @@ class MineField:
 		"""Return positions of all the mines."""
 		return ((x, y) for x in range(self.width)
 		               for y in range(self.height) if self.mines[x][y])
-		
+
+	def remaining(self):
+		"""Get number of remaining mines."""
+		mines = sum(1 for _ in self.get_mines())
+		marked = sum(1 for x in range(self.width)
+					   for y in range(self.height) if self.marks[x][y] == FLAG)
+		return mines - marked
 
 
 class MineFrame(tkinter.Frame):
@@ -125,12 +131,15 @@ class MineFrame(tkinter.Frame):
 		self.density = density
 		self.auto = autoreveal
 		self.game = None
+		self.bind_all("q", lambda a: self.quit())
 		# create button
 		button = tkinter.Button(self, text="NEW", relief="groove", command=self.new_game)
 		button.grid(row=0, column=0)
+		self.label = tkinter.Label(self, text="")
+		self.label.grid(row=0, column=1)
 		# create mine field
 		self.canvas = tkinter.Canvas(self, width=width*side, height=height*side, bg="white")
-		self.canvas.grid(row=1, column=0)
+		self.canvas.grid(row=1, column=0, columnspan=2)
 		self.canvas.bind("<Button>", self.reveal_cell)
 		self.new_game()
 		
@@ -177,12 +186,14 @@ class MineFrame(tkinter.Frame):
 						gameover = True
 					else:
 						self.canvas.create_text(x+s2, y+s2, text=str(mark))
+				self.label["text"] = "%d mines left" % self.game.remaining()
 			if gameover:
 				# draw all mines
 				for (col, line) in self.game.get_mines():
 					x, y = coords(col, line)
 					self.canvas.create_oval(x+s4, y+s4, x+s2+s4, y+s2+s4, fill="black")
 				self.game = None
+				self.label["text"] = "Game Over!"
 
 
 # start application
