@@ -133,13 +133,13 @@ class MineFrame(tkinter.Frame):
 		self.game = None
 		self.bind_all("q", lambda a: self.quit())
 		# create button
-		button = tkinter.Button(self, text="NEW", relief="groove", command=self.new_game)
-		button.grid(row=0, column=0)
+		tkinter.Button(self, text="NEW", relief="groove", command=self.new_game).grid(row=0, column=0)
+		tkinter.Button(self, text="HINT", relief="groove", command=self.hint).grid(row=0, column=2)
 		self.label = tkinter.Label(self, text="")
 		self.label.grid(row=0, column=1)
 		# create mine field
 		self.canvas = tkinter.Canvas(self, width=width*side, height=height*side, bg="white")
-		self.canvas.grid(row=1, column=0, columnspan=2)
+		self.canvas.grid(row=1, column=0, columnspan=3)
 		self.canvas.bind("<Button>", self.reveal_cell)
 		self.new_game()
 		
@@ -147,6 +147,17 @@ class MineFrame(tkinter.Frame):
 		"""Start new game."""
 		self.game = MineField(self.width, self.height, self.density)
 		self.draw_field()
+
+	def hint(self):
+		"""Provide a hint by revealing a random zero-neighbor-cell."""
+		zeros = [(x,y) for x in range(self.width) for y in range(self.height)
+		               if self.game.marks[x][y] == CLOSED and
+		                  not self.game.mines[x][y] and
+		                  self.game.count_neighbor_mines(x, y) == 0]
+		if zeros:
+			x, y = random.choice(zeros)
+			self.game.reveal(x, y, True)
+			self.draw_field()
 
 	def reveal_cell(self, event):
 		"""Reveal cell where the mouse has been clicked."""
