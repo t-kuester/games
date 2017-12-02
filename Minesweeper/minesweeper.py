@@ -150,6 +150,8 @@ class MineFrame(tkinter.Frame):
 
 	def hint(self):
 		"""Provide a hint by revealing a random zero-neighbor-cell."""
+		if not self.game:
+			return
 		zeros = [(x,y) for x in range(self.width) for y in range(self.height)
 		               if self.game.marks[x][y] == CLOSED and
 		                  not self.game.mines[x][y] and
