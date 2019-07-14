@@ -98,7 +98,8 @@ def random_play(board, move, player):
 		if not moves:
 			return winning_draw(board, player), i
 		player = -player
-		board = apply_move(board, random.choice(moves), player)
+		move = random.choice(moves)
+		board = apply_move(board, move, player)
 
 def best_move_random_plays(board, moves, player):
 	""" perform random plays for random moves until time is up,
