@@ -1,7 +1,5 @@
 # TODO
 # proper monte carlo tree search
-# fast method for board copying (maybe try flat board again?)
-# MCTS "lite"? create game tree, descent and update game tree in each turn
 
 import sys, functools, random, time, copy, itertools
 
@@ -91,15 +89,17 @@ def random_play(board, move, player):
 	return winning player and number of moves
 	"""
 	board = apply_move(board, move, player)
+	seq = [move]
 	for i in itertools.count():
 		if winning(board, player):
-			return player, i
+			return player, i, seq
 		moves = get_moves(board, move)
 		if not moves:
-			return winning_draw(board, player), i
+			return winning_draw(board, player), i, seq
 		player = -player
 		move = random.choice(moves)
 		board = apply_move(board, move, player)
+		seq.append(move)
 
 def best_move_random_plays(board, moves, player):
 	""" perform random plays for random moves until time is up,
@@ -112,29 +112,72 @@ def best_move_random_plays(board, moves, player):
 		if time.time() - start > TIMEOUT:
 			break
 		move = random.choice(moves)
-		r, c = random_play(board, move, player)
-		scores[move] += player * r
+		r, c, seq = random_play(board, move, player)
+		scores[move] += r
 		total += c
 	
-	debug(i, total, scores)
-	return max((scores[m], m) for m in moves)
+	debug(i, total)#, scores)
+	return max((player * scores[m], m) for m in moves)
+
+
+def best_move_random_plays_game_tree(board, moves, player):
+	# idea: keep score about all later states in random plays for later rounds
+	# slowdown of about 10% in terms of played turns
+	# number of games actually kept for next turn is almost nonexisting...
+	# no measurable effect (if anything, it might be worse)
+	
+	start = time.time()
+	total = 0
+
+	for i in itertools.count():
+		if time.time() - start > TIMEOUT:
+			break
+		
+		move = random.choice(moves)
+		r, c, seq = random_play(board, move, player)
+
+		# random play gibt ID des gewinners zurück, also -1 für OPP
+		# game tree enthält dann auch jeweils den gewinner dieses zuges
+		# wie bei normalem best-move-random-play bei max mit player multiplizieren
+
+		t = game_tree
+		for m in seq:
+			if m not in t:
+				t[m] = [0, 0, {}]
+			t[m][0] += r # victory ratio
+			t[m][1] += 1 # number of games played
+			t = t[m][2] # descend into child tree
+		
+		total += c
+	
+	diff = sum(v[1] for v in game_tree.values()) - i
+	debug(i, total, diff)
+	return max((player * game_tree[m][0] if m in game_tree else 0, m) for m in moves)
+
+
 
 def best_move(board, moves, player):
 	""" return winning move, or best non-losing move, if any
 	"""
+	bmf = best_move_random_plays if player == OWN else best_move_random_plays_game_tree
+	
 	win_move = winning_move(board, moves, player)
 	non_lose = non_losing_moves(board, moves, player)
 	if win_move:
 		return 999, win_move
 	elif non_lose:
-		return best_move_random_plays(board, non_lose, player)
+		return bmf(board, non_lose, player)
 	else:
-		return best_move_random_plays(board, moves, player)
+		return bmf(board, moves, player)
 
 
 # INITIALIZATION
 
 def play_game():
+	
+	global game_tree
+	game_tree = {}
+	
 	board = [[NONE for _ in range(9)] for _ in range(9)]
 	player, move = random.choice([OWN, OPP]), (-1, -1)
 	for i in itertools.count():
@@ -144,10 +187,13 @@ def play_game():
 
 		score, move = best_move(board, moves, player)
 		
-		debug("{} move: {}, score: {}".format(i, move, score))
+		game_tree = game_tree[move][2] if move in game_tree else {}
+		
+		#~debug("{} move: {}, score: {}".format(i, move, score))
 		board = apply_move(board, move, player)
 
-		show_grid(board)
+		#~show_grid(board)
+		#~input()
 		
 		if winning(board, player):
 			return player
@@ -155,20 +201,12 @@ def play_game():
 
 seed = random.randrange(1000000)
 random.seed(seed)
-TIMEOUT = 0.5
+TIMEOUT = 0.1
 results = {+1: 0, 0: 0, -1: 0}
 for i in range(100):
 	r = play_game()
 	results[r] += 1
 	print(i, r, results)
-	break
+	#~break
 print(results)
 print(seed)
-
-# WHY ARE RESULTS STILL BIASED TOWARDS PLAYER +1 ?
-# {0: 17, 1: 52, -1: 31} best move random play vs. best move random play
-# {0: 6, 1: 54, -1: 40} BMRP vs BMRP + winning-draw
-# {0: 3, 1: 42, -1: 55} BMRP vs. BM + winning move
-# {0: 14, 1: 55, -1: 31} BM + winning move vs BMRP
-# {0: 8, 1: 66, -1: 26} BM + winning + non-losing vs BMRP
-# {0: 5, 1: 30, -1: 65} BMRP vs BM + winning + non-losing
