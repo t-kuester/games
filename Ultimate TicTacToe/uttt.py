@@ -12,6 +12,10 @@ rows = range(3) # yes, this does makes a difference!
 SYMBOL = [".", "X", "#", "O"]
 NONE, OWN, OPP, DRAW = 0, 1, -1, 2
 
+
+# BASIC BOARD HANDLING
+# how to represent and manipulate the board, to be used by all stragegies
+
 def get_moves(board, last):
 	""" get valid moves given board and last move
 	"""
@@ -20,17 +24,6 @@ def get_moves(board, last):
 			((r,c) for r in rows for c in rows if type(board[r*3+c]) == list)
 	return [(3*R+r, 3*C+c) for (R,C) in playable_fields
 			for r in rows for c in rows if board[R*3+C][r*3+c] == NONE]
-
-def winning_move(board, moves, player):
-	""" get move that leads to immediate victory, if any, or None
-	"""
-	return next((m for m in moves if winning(apply_move(board, m, player), player)), None)
-
-def non_losing_moves(board, moves, player):
-	""" get moves that do not lead to victory of other player in next turn
-	"""
-	return [m for m, nb in ((m, apply_move(board, m, player)) for m in moves)
-	        if not winning_move(nb, get_moves(nb, m), -player)]
 
 def winning_draw(board, player):
 	""" In case of no line, player with more smaller boards wins
@@ -52,17 +45,46 @@ def apply_move(board, move, player):
 	"""
 	R, C = move[0] // 3, move[1] // 3
 	r, c = move[0] % 3, move[1] % 3
-	
-	board = partial_copy(board, move)
+	board = list(board)
+	board[R*3+C] = list(board[R*3+C])
 	subgrid = board[R*3+C]
 	
 	subgrid[r*3+c] = player
 	if winning(subgrid, player):
 		board[R*3+C] = player
-	elif not NONE in subgrid: #any(c == NONE for line in subgrid for c in line):
+	elif not NONE in subgrid:
 		board[R*3+C] = DRAW
-		
 	return board
+	
+def show_grid(board):
+	""" draw a nice representation of the grid; mainly to check apply_move
+	"""
+	for r in range(9):
+		if r in (3, 6):
+			debug('-'.join("---+---+---"))
+		line = ""
+		for c in range(9):
+			if c in (3, 6):
+				line += "|"
+			g = board[(r//3)*3+(c//3)]
+			x = g if type(g) == int else g[(r%3)*3+(c%3)]
+			line += SYMBOL[x]
+		debug(' '.join(line))
+
+
+# STRATEGY
+# stuff related to which moves to take, independent of board data structure
+
+def winning_move(board, moves, player):
+	""" get move that leads to immediate victory, if any, or None
+	"""
+	return next((m for m in moves if winning(apply_move(board, m, player), player)), None)
+
+def non_losing_moves(board, moves, player):
+	""" get moves that do not lead to victory of other player in next turn
+	"""
+	return [m for m, nb in ((m, apply_move(board, m, player)) for m in moves)
+	        if not winning_move(nb, get_moves(nb, m), -player)]
 
 def random_play(board, move, player):
 	""" perform random moves until the game is over,
@@ -83,7 +105,6 @@ def best_move_random_plays(board, moves, player):
 	select move with best win/loss ratio
 	"""
 	scores = {move: 0 for move in moves}
-	
 	start = time.time()
 	total = 0
 	for i in itertools.count():
@@ -97,7 +118,6 @@ def best_move_random_plays(board, moves, player):
 	debug(i, total, scores)
 	return max((scores[m], m) for m in moves)
 
-
 def best_move(board, moves, player):
 	""" return winning move, or best non-losing move, if any
 	"""
@@ -110,30 +130,6 @@ def best_move(board, moves, player):
 	else:
 		return best_move_random_plays(board, moves, player)
 
-
-def partial_copy(board, move):
-	""" create partial copy of only the affected parts of the board
-	about 10% slower... maybe with flat lists? should be ~5x faster
-	"""
-	R, C = move[0] // 3, move[1] // 3
-	board = list(board)
-	board[R*3+C] = list(board[R*3+C])
-	return board
-	
-def show_grid(board):
-	""" draw a nice representation of the grid; mainly to check apply_move
-	"""
-	for r in range(9):
-		if r in (3, 6):
-			debug('-'.join("---+---+---"))
-		line = ""
-		for c in range(9):
-			if c in (3, 6):
-				line += "|"
-			g = board[(r//3)*3+(c//3)]
-			x = g if type(g) == int else g[(r%3)*3+(c%3)]
-			line += SYMBOL[x]
-		debug(' '.join(line))
 
 # INITIALIZATION
 
