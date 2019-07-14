@@ -1,6 +1,7 @@
 # TODO
 # proper monte carlo tree search
 # fast method for board copying (maybe try flat board again?)
+# MCTS "lite"? create game tree, descent and update game tree in each turn
 
 import sys, functools, random, time, copy, itertools
 
@@ -15,10 +16,10 @@ def get_moves(board, last):
 	""" get valid moves given board and last move
 	"""
 	R, C = last[0] % 3, last[1] % 3
-	playable_fields = [(R,C)] if last != (-1, -1) and type(board[R][C]) == list else \
-			((r,c) for r in rows for c in rows if type(board[r][c]) == list)
+	playable_fields = [(R,C)] if last != (-1, -1) and type(board[R*3+C]) == list else \
+			((r,c) for r in rows for c in rows if type(board[r*3+c]) == list)
 	return [(3*R+r, 3*C+c) for (R,C) in playable_fields
-			for r in rows for c in rows if board[R][C][r][c] == NONE]
+			for r in rows for c in rows if board[R*3+C][r*3+c] == NONE]
 
 def winning_move(board, moves, player):
 	""" get move that leads to immediate victory, if any, or None
@@ -34,17 +35,17 @@ def non_losing_moves(board, moves, player):
 def winning_draw(board, player):
 	""" In case of no line, player with more smaller boards wins
 	"""
-	own = sum(1 for line in board for c in line if c == +player)
-	opp = sum(1 for line in board for c in line if c == -player)
+	own = sum(1 for c in board if c == +player)
+	opp = sum(1 for c in board if c == -player)
 	return player if (own > opp) else (-player if opp > own else 0)
 
 def winning(board, player):
 	""" check whether player has won the board, works for sub- or for meta board
 	"""
-	return (any(all(board[r][c] == player for c in rows) for r in rows)
-		 or any(all(board[r][c] == player for r in rows) for c in rows)
-		 or all(board[i][   i]  == player for i in rows)
-		 or all(board[i][-1-i]  == player for i in rows))
+	return (any(all(board[r*3+c] == player for c in rows) for r in rows)
+		 or any(all(board[r*3+c] == player for r in rows) for c in rows)
+		 or all(board[i*3+   i]  == player for i in rows)
+		 or all(board[i*3+2-i]  == player for i in rows))
 
 def apply_move(board, move, player):
 	""" apply move; if player won smaller board, update meta board
@@ -53,16 +54,16 @@ def apply_move(board, move, player):
 	r, c = move[0] % 3, move[1] % 3
 	
 	board = partial_copy(board, move)
-	subgrid = board[R][C]
+	subgrid = board[R*3+C]
 	
-	subgrid[r][c] = player
+	subgrid[r*3+c] = player
 	if winning(subgrid, player):
-		board[R][C] = player
-	elif not any(c == NONE for line in subgrid for c in line):
-		board[R][C] = DRAW
+		board[R*3+C] = player
+	elif not NONE in subgrid: #any(c == NONE for line in subgrid for c in line):
+		board[R*3+C] = DRAW
 		
 	return board
-	
+
 def random_play(board, move, player):
 	""" perform random moves until the game is over,
 	return winning player and number of moves
@@ -93,31 +94,30 @@ def best_move_random_plays(board, moves, player):
 		scores[move] += player * r
 		total += c
 	
-	debug(i, total, moves)
+	debug(i, total, scores)
 	return max((scores[m], m) for m in moves)
+
 
 def best_move(board, moves, player):
 	""" return winning move, or best non-losing move, if any
 	"""
 	win_move = winning_move(board, moves, player)
+	non_lose = non_losing_moves(board, moves, player)
 	if win_move:
-		debug("WINNING MOVE")
 		return 999, win_move
+	elif non_lose:
+		return best_move_random_plays(board, non_lose, player)
 	else:
-		non_lose = non_losing_moves(board, moves, player)
-		if non_lose:
-			return best_move_random_plays(board, non_lose, player)
-		else:
-			debug("only losing moves...")
-			return best_move_random_plays(board, moves, player)
-	
+		return best_move_random_plays(board, moves, player)
+
+
 def partial_copy(board, move):
 	""" create partial copy of only the affected parts of the board
 	about 10% slower... maybe with flat lists? should be ~5x faster
 	"""
 	R, C = move[0] // 3, move[1] // 3
-	board = list(map(list, board))
-	board[R][C] = list(map(list, board[R][C]))
+	board = list(board)
+	board[R*3+C] = list(board[R*3+C])
 	return board
 	
 def show_grid(board):
@@ -130,30 +130,22 @@ def show_grid(board):
 		for c in range(9):
 			if c in (3, 6):
 				line += "|"
-			g = board[r//3][c//3]
-			x = g if type(g) == int else g[r%3][c%3]
+			g = board[(r//3)*3+(c//3)]
+			x = g if type(g) == int else g[(r%3)*3+(c%3)]
 			line += SYMBOL[x]
 		debug(' '.join(line))
-
 
 # INITIALIZATION
 
 def play_game():
-	board = [[[[NONE for _ in range(3)] for _ in range(3)]
-					 for _ in range(3)] for _ in range(3)]
+	board = [[NONE for _ in range(9)] for _ in range(9)]
 	player, move = random.choice([OWN, OPP]), (-1, -1)
 	for i in itertools.count():
 		moves = get_moves(board, move)
 		if not moves:
-			r = winning_draw(board, player)
-			if r:
-				show_grid(board)
-			return r
+			return winning_draw(board, player)
 
-		if player == OPP:
-			score, move = best_move(board, moves, player)
-		else:
-			score, move = best_move_random_plays(board, moves, player)
+		score, move = best_move(board, moves, player)
 		
 		debug("{} move: {}, score: {}".format(i, move, score))
 		board = apply_move(board, move, player)
