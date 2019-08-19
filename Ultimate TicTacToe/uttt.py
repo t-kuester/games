@@ -1,7 +1,9 @@
-# TODO
-# proper monte carlo tree search
-# fast method for board copying (maybe try flat board again?)
-# MCTS "lite"? create game tree, descent and update game tree in each turn
+"""Ultimate Tic Tac Toe Model
+by Tobias Kuester, <tobias.kuester@gmx.net>, 2019
+
+Idea and basic algorithm from my CodinGame bot. Some adaptions, simplifications
+and extensions for game with UI and multiple players.
+"""
 
 import sys, functools, random, time, copy, itertools
 
@@ -15,6 +17,9 @@ NONE, OWN, OPP, DRAW = 0, 1, -1, 2
 
 # BASIC BOARD HANDLING
 # how to represent and manipulate the board, to be used by all stragegies
+
+def init_board():
+	return [[NONE for _ in range(9)] for _ in range(9)]
 
 def get_moves(board, last):
 	""" get valid moves given board and last move
@@ -101,22 +106,26 @@ def random_play(board, move, player):
 		move = random.choice(moves)
 		board = apply_move(board, move, player)
 
-def best_move_random_plays(board, moves, player):
+def evaluate_moves(board, moves, player, timeout):
 	""" perform random plays for random moves until time is up,
-	select move with best win/loss ratio
 	"""
 	scores = {move: 0 for move in moves}
 	start = time.time()
 	total = 0
 	for i in itertools.count():
-		if time.time() - start > TIMEOUT:
+		if time.time() - start > timeout:
 			break
 		move = random.choice(moves)
 		r, c = random_play(board, move, player)
 		scores[move] += player * r
 		total += c
-	
 	debug(i, total, scores)
+	return scores
+
+def best_move_random_plays(board, moves, player):
+	""" select move with best win/loss ratio
+	"""
+	scores = evaluate_moves(board, moves, player, TIMEOUT)
 	return max((scores[m], m) for m in moves)
 
 def best_move(board, moves, player):
@@ -135,7 +144,7 @@ def best_move(board, moves, player):
 # INITIALIZATION
 
 def play_game():
-	board = [[NONE for _ in range(9)] for _ in range(9)]
+	board = init_board()
 	player, move = random.choice([OWN, OPP]), (-1, -1)
 	for i in itertools.count():
 		moves = get_moves(board, move)
@@ -153,17 +162,18 @@ def play_game():
 			return player
 		player = -player
 
-seed = random.randrange(1000000)
-random.seed(seed)
-TIMEOUT = 0.5
-results = {+1: 0, 0: 0, -1: 0}
-for i in range(100):
-	r = play_game()
-	results[r] += 1
-	print(i, r, results)
-	break
-print(results)
-print(seed)
+if __name__ == "__main__":
+	seed = random.randrange(1000000)
+	random.seed(seed)
+	TIMEOUT = 0.5
+	results = {+1: 0, 0: 0, -1: 0}
+	for i in range(100):
+		r = play_game()
+		results[r] += 1
+		print(i, r, results)
+		break
+	print(results)
+	print(seed)
 
 # WHY ARE RESULTS STILL BIASED TOWARDS PLAYER +1 ?
 # {0: 17, 1: 52, -1: 31} best move random play vs. best move random play
