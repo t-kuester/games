@@ -10,8 +10,10 @@ for manually executing the AI's move in a single player game, or for getting hin
 on improving one's own play, or for evaluating and improving the AI itself.
 
 TODO
-- button auto-play?
 - code-cleanup, documentation
+- handle draw and winning-draw
+- key-bindings (q,n,e,p?)
+- start parameters?
 """
 
 import tkinter
@@ -22,7 +24,7 @@ SIDE = 36
 FONT_FAMILY = "Arial"
 FONT_VALUE  = None
 FONT_MARKER = None
-TIMEOUT = 0.5
+TIMEOUT = 0.1
 
 class UTTTFrame(tkinter.Frame):
 	"""Tkinter-Frame for displaying and playing a game of Ultimate Tic Tac Toe.
@@ -32,28 +34,34 @@ class UTTTFrame(tkinter.Frame):
 		tkinter.Frame.__init__(self, master)
 		self.master.title("Ultimate Tic Tac Toe")
 		self.grid()
+				
+		# create buttons panel
+		tkinter.Button(self, text="New Game", command=self.new_game).grid(row=0, column=0)
+		tkinter.Button(self, text="Evaluate", command=self.eval_moves).grid(row=0, column=1)
+		tkinter.Button(self, text="Play Best", command=self.play_best).grid(row=0, column=2)
+		self.status_var = tkinter.StringVar()
+		tkinter.Label(self, textvariable=self.status_var).grid(row=1, column=0, columnspan=3)
+		
+		# create canvas
+		self.canvas = tkinter.Canvas(self, bg="white", width=9*SIDE, height=9*SIDE)
+		self.canvas.grid(row=2, column=0, columnspan=3)
+		self.canvas.bind("<Button>", self.mouse_clicked)
+		self.new_game()
+	
+	def new_game(self):
 		self.board = uttt.init_board()
 		self.player = +1
 		self.last_move = (-1, -1)
 		self.scores = {}
 		self.game_over = False
-				
-		# create buttons panel
-		self.player_var = tkinter.StringVar()
-		tkinter.Label(self, textvariable=self.player_var).grid(row=0, column=0)
-		tkinter.Button(self, text="Evaluate", command=self.eval_moves).grid(row=0, column=1)
-		tkinter.Button(self, text="Play Best", command=self.play_best).grid(row=0, column=2)
-		
-		# create canvas
-		self.canvas = tkinter.Canvas(self, bg="white", width=9*SIDE, height=9*SIDE)
-		self.canvas.grid(row=1, column=0, columnspan=3)
-		self.canvas.bind("<Button>", self.mouse_clicked)
 		self.update()
 	
 	def eval_moves(self):
 		if not self.game_over:
 			moves = uttt.get_moves(self.board, self.last_move)
-			self.scores = uttt.evaluate_moves(self.board, moves, self.player, TIMEOUT)
+			scores = uttt.evaluate_moves(self.board, moves, self.player, TIMEOUT)
+			for k in scores:
+				self.scores[k] = self.scores.get(k, 0) + scores[k]
 			self.update()
 		
 	def play_best(self):
@@ -99,10 +107,10 @@ class UTTTFrame(tkinter.Frame):
 	
 	def update(self):
 		if uttt.winning(self.board, -self.player):
-			self.player_var.set("%s has won!" % uttt.SYMBOL[-self.player])
+			self.status_var.set("%s has won!" % uttt.SYMBOL[-self.player])
 			self.game_over = True
 		else:
-			self.player_var.set("Next: %s's turn" % uttt.SYMBOL[self.player])
+			self.status_var.set("Next: %s's turn" % uttt.SYMBOL[self.player])
 		self.canvas.delete("all")
 		valid = uttt.get_moves(self.board, self.last_move)
 		for i, board in enumerate(self.board):

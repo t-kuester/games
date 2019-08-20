@@ -141,7 +141,7 @@ def best_move(board, moves, player):
 		return best_move_random_plays(board, moves, player)
 
 
-# INITIALIZATION
+# TESTING AND PERFORMANCE
 
 def play_game():
 	board = init_board()
