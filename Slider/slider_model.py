@@ -39,22 +39,28 @@ class SliderGame:
         pass
         
     def apply_move(self, move):
-        if   move == UP:
-            self.field = list(map(list, zip(*[self.compress(line) for line in zip(*self.field)])))
-        elif move == DOWN:
-            self.field = list(map(list, zip(*[self.compress(line) for line in zip(*self.field[::-1])])))[::-1]
-        elif move == LEFT:
-            self.field = [self.compress(line) for line in self.field]
-        elif move == RIGHT:
-            self.field = [self.compress(line[::-1])[::-1] for line in self.field]
-        else:
-            print("UNKNOWN MOVE:", move)
-        
+        old_score = self.score
+        self.field = self.update_field(move)
         self.spawn(CREATE_NUM)
+        return self.score - old_score
+
+    def update_field(self, move):
+        if   move == UP:
+            return list(map(list, zip(*[self.compress(line) for line in zip(*self.field)])))
+        elif move == DOWN:
+            return list(map(list, zip(*[self.compress(line) for line in zip(*self.field[::-1])])))[::-1]
+        elif move == LEFT:
+            return [self.compress(line) for line in self.field]
+        elif move == RIGHT:
+            return [self.compress(line[::-1])[::-1] for line in self.field]
+        else:
+            print("unknown move", move)
+            return list(map(list, self.field))
 
     def compress(self, line):
         i, j, k = 0, 0, 1
-        line=list(line)
+        line = list(line)
+        merged = []
         while True:
             while i < len(line) and line[i] == 0: i += 1
             while k < len(line) and (line[k] == 0 or k <= i): k += 1
@@ -62,14 +68,15 @@ class SliderGame:
                 break
             if k < len(line) and line[i] == line[k]:
                 line[j] = line[i] + 1
+                merged.append(line[j])
                 i, k, j = k+1, k+2, j+1
             else:
                 line[j] = line[i]
                 i, k, j = k, k+1, j+1
         for i in range(j, len(line)):
             line[i] = 0
+        self.score += self.calculate_score(merged)
         return line    
-    
     
     def compress_old(self, line):
         res = []
@@ -88,10 +95,11 @@ class SliderGame:
             res.append(0)
         return res
     
-    def calculate_score(self):
-        pass
+    def calculate_score(self, merged):
+        return sum(2**(m-1) for m in merged)
     
     def show(self):
+        print("SCORE", self.score)
         for line in self.field:
             print(*("%2d" % c for c in line))
 
