@@ -1,28 +1,29 @@
-import random
-
 """
 TODO
 get valid moves
 make application of moves more efficient (for AI random plays)
 documentation
 check game over (simply try-except?)
-improve key-handling for testing in terminal
-keep track of merged cells and calculate score
 """
+
+import random
 
 WIDTH      = 4
 CREATE_NUM = 1
 CREATE_MAX = 1
-ALLOW_NOOP = True
+ALLOW_NOOP = False
 
-LEFT, RIGHT, UP, DOWN = "LEFT RIGHT UP DOWN".split()
+MOVES = LEFT, RIGHT, UP, DOWN, SKIP = "LEFT RIGHT UP DOWN SKIP".split()
+
 
 class SliderGame:
     
     def __init__(self):
+        self.turn = 0
         self.score = 0
         self.field = [[0 for _ in range(WIDTH)] for _ in range(WIDTH)]
-        self.spawn(CREATE_NUM)
+        self.new = self.spawn(CREATE_NUM)
+        self.merged = []
     
     def spawn(self, n):
         new_cells = random.sample(self.empty_cells(), n)
@@ -35,14 +36,24 @@ class SliderGame:
                 if self.field[y][x] == 0]
     
     def valid_moves(self):
-        # test which moves alter the field
-        pass
+        if ALLOW_NOOP:
+            yield SKIP
+        for move in MOVES:
+            new_field = self.update_field(move)
+            if new_field != self.field:
+                yield move
         
     def apply_move(self, move):
-        old_score = self.score
-        self.field = self.update_field(move)
-        self.spawn(CREATE_NUM)
-        return self.score - old_score
+        if move in self.valid_moves():
+            self.turn += 1
+            self.merged = []
+            self.field = self.update_field(move)
+            self.spawn(CREATE_NUM)
+            score = self.calculate_score()
+            self.score += score
+            return score
+        else:
+            print("INVALID MOVE")
 
     def update_field(self, move):
         if   move == UP:
@@ -53,14 +64,14 @@ class SliderGame:
             return [self.compress(line) for line in self.field]
         elif move == RIGHT:
             return [self.compress(line[::-1])[::-1] for line in self.field]
+        elif move == SKIP:
+            return list(map(list, self.field))
         else:
             print("unknown move", move)
-            return list(map(list, self.field))
 
     def compress(self, line):
         i, j, k = 0, 0, 1
         line = list(line)
-        merged = []
         while True:
             while i < len(line) and line[i] == 0: i += 1
             while k < len(line) and (line[k] == 0 or k <= i): k += 1
@@ -68,14 +79,13 @@ class SliderGame:
                 break
             if k < len(line) and line[i] == line[k]:
                 line[j] = line[i] + 1
-                merged.append(line[j])
+                self.merged.append(line[j])
                 i, k, j = k+1, k+2, j+1
             else:
                 line[j] = line[i]
                 i, k, j = k, k+1, j+1
         for i in range(j, len(line)):
             line[i] = 0
-        self.score += self.calculate_score(merged)
         return line    
     
     def compress_old(self, line):
@@ -95,8 +105,8 @@ class SliderGame:
             res.append(0)
         return res
     
-    def calculate_score(self, merged):
-        return sum(2**(m-1) for m in merged)
+    def calculate_score(self):
+        return sum(2**m for m in self.merged)
     
     def show(self):
         print("SCORE", self.score)

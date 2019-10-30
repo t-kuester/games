@@ -1,5 +1,13 @@
+"""
+TODO
+- animation
+- colors
+- highlight new and merged tiles
+"""
+
 import slider_model
 import tkinter as tk
+import tkinter.font as tkf
 
 class SliderFrame(tk.Frame):
     
@@ -20,10 +28,13 @@ class SliderFrame(tk.Frame):
     def handle_keys(self, event, shift=False):
         if event.keysym == "q":
             self.quit()
-            
-        DIRECTIONS = {"Right", "Left", "Up", "Down", "Space"}
+        DIRECTIONS = {"Right": slider_model.RIGHT,
+                      "Left":  slider_model.LEFT,
+                      "Up":    slider_model.UP,
+                      "Down":  slider_model.DOWN,
+                      "space": slider_model.SKIP}
         if event.keysym in DIRECTIONS:
-            move = event.keysym.upper()
+            move = DIRECTIONS[event.keysym]
             self.game.apply_move(move)
             self.draw_state()
         
@@ -31,13 +42,16 @@ class SliderFrame(tk.Frame):
         self.update()
         self.canvas.delete("all")
         w = self.get_cellwidth()
+        font = tkf.Font(family="Arial", size=int(w)//4)
         for r, row in enumerate(self.game.field):
             for c, col in enumerate(row):
                 value = self.game.field[r][c]
                 x, y = c*w, r*w
                 self.canvas.create_rectangle(x, y, x+w, y+w)
                 if value != 0:
-                    self.canvas.create_text(x+w/2, y+w/2, text=str(value), anchor="center")
+                    self.canvas.create_text(x+w/2, y+w/2, text=str(2**value),
+                                            anchor="center", font=font)
+        print(self.game.turn, self.game.score)
 
     def get_cellwidth(self):
         width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
