@@ -1,8 +1,10 @@
 """
 TODO
 - animation
-- colors
 - highlight new and merged tiles
+- documentation
+- label for score, buttons for new game etc.
+- maybe allow undo once?
 """
 
 import slider_model
@@ -42,20 +44,24 @@ class SliderFrame(tk.Frame):
         self.update()
         self.canvas.delete("all")
         w = self.get_cellwidth()
-        font = tkf.Font(family="Arial", size=int(w)//4)
+        font = tkf.Font(family="Arial", size=int(w)//3)
         for r, row in enumerate(self.game.field):
             for c, col in enumerate(row):
                 value = self.game.field[r][c]
+                bg = int(255 * 0.95**(value)) if value else 255
                 x, y = c*w, r*w
-                self.canvas.create_rectangle(x, y, x+w, y+w)
+                self.canvas.create_rectangle(x, y, x+w, y+w, fill='#%02X%02X%02X' % (bg, bg, bg))
                 if value != 0:
-                    self.canvas.create_text(x+w/2, y+w/2, text=str(2**value),
-                                            anchor="center", font=font)
+                    self.canvas.create_text(x+w/2, y+w/2, text=to_str(value), anchor="center", font=font)
         print(self.game.turn, self.game.score)
 
     def get_cellwidth(self):
         width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
         return min(height, width) / slider_model.WIDTH
+
+def to_str(value):
+    #~return str(value)
+    return str(2**value)
 
 
 def main():
