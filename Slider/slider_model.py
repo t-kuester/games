@@ -2,8 +2,6 @@
 TODO
 make application of moves more efficient (for AI random plays)
 documentation
-check game over (simply try-except?)
-10% for 4, 1% for 8, etc.
 """
 
 import random
@@ -43,6 +41,10 @@ class SliderGame:
     def empty_cells(self):
         return [(x,y) for x in range(WIDTH) for y in range(WIDTH)
                 if self.field[y][x] == 0]
+
+    def is_game_over(self):
+        # TODO does not work if SKIP is allowed
+        return not self.valid_moves()
     
     def valid_moves(self):
         moves = set()
