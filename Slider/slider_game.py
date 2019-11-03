@@ -1,9 +1,9 @@
 """
 TODO
-- highlight new and merged tiles
-- animation
+- highlight merged tiles
+- animation (still needed after highlighting?)
 - documentation
-- maybe allow undo once?
+- maybe allow undo once? or save/restore?
 """
 
 import slider_model
@@ -41,8 +41,9 @@ class SliderFrame(tk.Frame):
             self.draw_state()
         if event.keysym in DIRECTIONS:
             move = DIRECTIONS[event.keysym]
-            self.game.apply_move(move)
-            self.draw_state()
+            if move in self.game.valid_moves():
+                self.game.apply_move(move)
+                self.draw_state()
         
     def draw_state(self, event=None):
         self.update()
@@ -54,7 +55,8 @@ class SliderFrame(tk.Frame):
                 value = self.game.field[r][c]
                 bg = int(255 * 0.95**(value)) if value else 255
                 x, y = c*w, r*w
-                self.canvas.create_rectangle(x, y, x+w, y+w, fill='#%02X%02X%02X' % (bg, bg, bg))
+                self.canvas.create_rectangle(x, y, x+w, y+w, fill='#%02X%02X%02X' % (bg, bg, bg),
+                                             width=2 if (c, r) in self.game.new else 1)
                 if value != 0:
                     self.canvas.create_text(x+w/2, y+w/2, text=to_str(value), anchor="center", font=font)
         self.update_status()
@@ -69,8 +71,8 @@ class SliderFrame(tk.Frame):
         return min(height, width) / slider_model.WIDTH
 
 def to_str(value):
-    #~return str(value)
-    return str(2**value)
+    return str(value)
+    #~return str(2**value)
 
 
 def main():

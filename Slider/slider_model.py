@@ -1,11 +1,15 @@
 """
 TODO
 make application of moves more efficient (for AI random plays)
+change apply-move so that merged tiles can be memorized
 documentation
+wrap configuration into separate class or namedtuple
+problem when creating more than one but not enough space
 """
 
 import random
 import itertools
+import collections
 
 WIDTH        = 4
 CREATE_START = 2
@@ -17,6 +21,14 @@ ALLOW_NOOP   =  False
 MOVES = LEFT, RIGHT, UP, DOWN, SKIP = "LEFT RIGHT UP DOWN SKIP".split()
 
 
+Move = collections.namedtuple("Move", "name mdir start delta")
+
+MOVES2 = {UP:    Move(UP,     0+1j, 0+0j, 1+0j),
+          DOWN:  Move(DOWN,   0-1j, 0+1j, 1+0j),
+          LEFT:  Move(LEFT,  +1+0j, 0+0j, 0+1j),
+          RIGHT: Move(RIGHT, -1+0j, 1+0j, 0+1j)}
+
+
 class SliderGame:
     
     def __init__(self):
@@ -25,6 +37,9 @@ class SliderGame:
         self.field = [[0 for _ in range(WIDTH)] for _ in range(WIDTH)]
         self.new = self.spawn(CREATE_START)
         self.merged = []
+        
+        self.compress = self.compress4
+        self.update_field = self.update_field2
     
     def new_random(self):
         n = 1
@@ -33,48 +48,47 @@ class SliderGame:
         return n
     
     def spawn(self, n):
-        new_cells = random.sample(self.empty_cells(), n)
-        for x,y in new_cells:
+        self.new = random.sample(self.empty_cells(), n)
+        for x,y in self.new:
             self.field[y][x] = self.new_random()
-        return new_cells
+        return self.new
     
     def empty_cells(self):
         return [(x,y) for x in range(WIDTH) for y in range(WIDTH)
                 if self.field[y][x] == 0]
 
     def is_game_over(self):
-        # TODO does not work if SKIP is allowed
         return not self.valid_moves()
     
     def valid_moves(self):
         moves = set()
-        if ALLOW_NOOP:
+        if ALLOW_NOOP and sum(line.count(0) for line in self.field) >= CREATE_TURN:
             moves.add(SKIP)
 
-        #~for line in self.field:
-            #~for i in range(1, len(line)):
-                #~if line[i-1] == line[i]:
-                    #~moves.add(LEFT)
-                    #~moves.add(RIGHT)
-            #~if any(line[i] == 0 for i in range(1, len(line))):
-                #~moves.add(RIGHT)
-            #~if any(line[i] == 0 for i in range(len(line)-1)):
-                #~moves.add(LEFT)
-                #~
-        #~for line in zip(*self.field):
-            #~for i in range(1, len(line)):
-                #~if line[i-1] == line[i]:
-                    #~moves.add(UP)
-                    #~moves.add(DOWN)
-            #~if any(line[i] == 0 for i in range(1, len(line))):
-                #~moves.add(DOWN)
-            #~if any(line[i] == 0 for i in range(len(line)-1)):
-                #~moves.add(UP)
+        for line in self.field:
+            for i in range(1, len(line)):
+                if line[i-1] == line[i]:
+                    moves.add(LEFT)
+                    moves.add(RIGHT)
+            if any(line[i] == 0 for i in range(1, len(line))):
+                moves.add(RIGHT)
+            if any(line[i] == 0 for i in range(len(line)-1)):
+                moves.add(LEFT)
+                
+        for line in zip(*self.field):
+            for i in range(1, len(line)):
+                if line[i-1] == line[i]:
+                    moves.add(UP)
+                    moves.add(DOWN)
+            if any(line[i] == 0 for i in range(1, len(line))):
+                moves.add(DOWN)
+            if any(line[i] == 0 for i in range(len(line)-1)):
+                moves.add(UP)
 
-        for move in MOVES:
-            new_field = self.update_field(move)
-            if new_field != self.field:
-                moves.add(move)
+        #~for move in MOVES:
+            #~new_field = self.update_field(move)
+            #~if new_field != self.field:
+                #~moves.add(move)
                 
         return list(moves)
         
@@ -83,6 +97,12 @@ class SliderGame:
             self.turn += 1
             self.merged = []
             self.field = self.update_field(move)
+            
+            ref = self.update_field1(move)
+            res = self.update_field2(move)
+            if ref != res:
+                print(move, self.field)
+            
             self.spawn(CREATE_TURN)
             score = self.calculate_score()
             self.score += score
@@ -90,7 +110,7 @@ class SliderGame:
         else:
             print("INVALID MOVE")
 
-    def update_field(self, move):
+    def update_field1(self, move):
         if   move == UP:
             return list(map(list, zip(*[self.compress(line) for line in zip(*self.field)])))
         elif move == DOWN:
@@ -104,7 +124,62 @@ class SliderGame:
         else:
             print("unknown move", move)
 
-    def compress_new(self, line):
+    def update_field2(self, move):
+        res = self.field
+        # XXX FOR NOW, NOT IN-PLACE
+        res = list(map(list, self.field))
+        
+        if move == SKIP: return res
+        m = MOVES2[move]
+        
+        for i in range(WIDTH):
+            p = (WIDTH-1) * m.start + i * m.delta
+            
+            last = None
+            r = w = 0
+            while r < WIDTH:
+                cur = arr_get(res, p + m.mdir * r)
+                if cur == 0:
+                    r += 1
+                elif cur == last:
+                    arr_set(res, p + m.mdir * w, last + 1)
+                    self.merged.append(last + 1)
+                    last = None
+                    r += 1
+                    w += 1
+                else:
+                    if last is not None:
+                        arr_set(res, p + m.mdir * w, last)
+                        w += 1
+                    last = cur
+                    r += 1
+            while w < WIDTH:
+                arr_set(res, p + m.mdir * w, last or 0)
+                last = 0
+                w += 1
+                    
+        return res
+
+    def compress4(self, line):
+        res = []
+        last = None
+        for c in line:
+            if c == 0: continue
+            if c == last:
+                res.append(c+1)
+                self.merged.append(c+1)
+                last = None
+            else:
+                if last is not None:
+                    res.append(last)
+                last = c
+        if last is not None:
+            res.append(last)
+        while len(res) < WIDTH:
+            res.append(0)
+        return res
+
+    def compress2(self, line):
         i, j, k = 0, 0, 1
         line = list(line)
         n = len(line)
@@ -124,7 +199,7 @@ class SliderGame:
             line[i] = 0
         return line    
     
-    def compress(self, line):
+    def compress3(self, line):
         res = []
         for k, grp in itertools.groupby(filter(None, line)):
             for x in grp:
@@ -138,7 +213,7 @@ class SliderGame:
             res.append(0)
         return res
     
-    def compress_old(self, line):
+    def compress1(self, line):
         res = []
         skip = False
         line = [c for c in line if c != 0]
@@ -163,6 +238,15 @@ class SliderGame:
         print("SCORE", self.score)
         for line in self.field:
             print(*("%2d" % c for c in line))
+
+
+def arr_get(arr, p):
+    a, b = int(p.real), int(p.imag)
+    return arr[b][a]
+
+def arr_set(arr, p, v):
+    a, b = int(p.real), int(p.imag)
+    arr[b][a] = v
 
 
 def main():
