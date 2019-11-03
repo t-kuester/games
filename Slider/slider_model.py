@@ -1,7 +1,6 @@
 """
 TODO
 make application of moves more efficient (for AI random plays)
-change apply-move so that merged tiles can be memorized
 documentation
 wrap configuration into separate class or namedtuple
 problem when creating more than one but not enough space
@@ -61,6 +60,9 @@ class SliderGame:
         return not self.valid_moves()
     
     def valid_moves(self):
+        
+        return [LEFT, RIGHT, UP, DOWN]
+        
         moves = set()
         if ALLOW_NOOP and sum(line.count(0) for line in self.field) >= CREATE_TURN:
             moves.add(SKIP)
@@ -98,10 +100,10 @@ class SliderGame:
             self.merged = []
             self.field = self.update_field(move)
             
-            ref = self.update_field1(move)
-            res = self.update_field2(move)
-            if ref != res:
-                print(move, self.field)
+            #~ref = self.update_field1(move)
+            #~res = self.update_field2(move)
+            #~if ref != res:
+                #~print(move, self.field)
             
             self.spawn(CREATE_TURN)
             score = self.calculate_score()
@@ -136,27 +138,26 @@ class SliderGame:
             p = (WIDTH-1) * m.start + i * m.delta
             
             last = None
-            r = w = 0
-            while r < WIDTH:
+            w = 0
+            for r in range(WIDTH):
                 cur = arr_get(res, p + m.mdir * r)
                 if cur == 0:
-                    r += 1
+                    continue
                 elif cur == last:
                     arr_set(res, p + m.mdir * w, last + 1)
-                    self.merged.append(last + 1)
+                    #~self.merged.append(last + 1)
+                    c = p + m.mdir * w
+                    self.merged.append((int(c.real), int(c.imag)))
                     last = None
-                    r += 1
                     w += 1
                 else:
                     if last is not None:
                         arr_set(res, p + m.mdir * w, last)
                         w += 1
                     last = cur
-                    r += 1
-            while w < WIDTH:
+            for w in range(w, WIDTH):
                 arr_set(res, p + m.mdir * w, last or 0)
                 last = 0
-                w += 1
                     
         return res
 
@@ -232,7 +233,8 @@ class SliderGame:
         return res
     
     def calculate_score(self):
-        return sum(2**m for m in self.merged)
+        #~return sum(2**m for m in self.merged)
+        return sum(2**self.field[y][x] for (x,y) in self.merged)
     
     def show(self):
         print("SCORE", self.score)

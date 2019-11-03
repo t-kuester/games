@@ -49,7 +49,8 @@ class SliderFrame(tk.Frame):
         self.update()
         self.canvas.delete("all")
         w = self.get_cellwidth()
-        font = tkf.Font(family="Arial", size=int(w)//3)
+        font        = tkf.Font(family="Arial", size=int(w)//3)
+        font_merged = tkf.Font(family="Arial", size=int(w)//3, weight="bold")
         for r, row in enumerate(self.game.field):
             for c, col in enumerate(row):
                 value = self.game.field[r][c]
@@ -58,7 +59,8 @@ class SliderFrame(tk.Frame):
                 self.canvas.create_rectangle(x, y, x+w, y+w, fill='#%02X%02X%02X' % (bg, bg, bg),
                                              width=2 if (c, r) in self.game.new else 1)
                 if value != 0:
-                    self.canvas.create_text(x+w/2, y+w/2, text=to_str(value), anchor="center", font=font)
+                    self.canvas.create_text(x+w/2, y+w/2, text=to_str(value), anchor="center",
+                                            font=font_merged if (c, r) in self.game.merged else font)
         self.update_status()
 
     def update_status(self):
@@ -71,8 +73,8 @@ class SliderFrame(tk.Frame):
         return min(height, width) / slider_model.WIDTH
 
 def to_str(value):
-    return str(value)
-    #~return str(2**value)
+    #~return str(value)
+    return str(2**value)
 
 
 def main():

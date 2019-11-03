@@ -1,5 +1,8 @@
-import slider_model
+""" TODO
+- valid moves takes most time (by far) --> make it faster
+"""
 
+import slider_model
 import time, random
 
 def random_play(game):
@@ -27,7 +30,7 @@ while game.valid_moves():
         copy.field = list(map(list, game.field))
         score, moves = random_play(copy)
         scores[moves[0]] += score
-    
+            
     move = max(scores, key=scores.get)
     print(move, score, time.time() - start)
     game.apply_move(move)
