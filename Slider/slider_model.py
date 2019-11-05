@@ -17,16 +17,16 @@ CREATE_MAX   = 2
 PROB_MORE    = 0.1
 ALLOW_NOOP   =  False
 
-MOVES = LEFT, RIGHT, UP, DOWN, SKIP = "LEFT RIGHT UP DOWN SKIP".split()
+LEFT, RIGHT, UP, DOWN, SKIP = "LEFT RIGHT UP DOWN SKIP".split()
 
+Move = collections.namedtuple("Move", "mdir start delta")
+P    = collections.namedtuple("P",    "x y")
 
-Move = collections.namedtuple("Move", "name mdir start delta")
-
-MOVES2 = {UP:    Move(UP,     0+1j, 0+0j, 1+0j),
-          DOWN:  Move(DOWN,   0-1j, 0+1j, 1+0j),
-          LEFT:  Move(LEFT,  +1+0j, 0+0j, 0+1j),
-          RIGHT: Move(RIGHT, -1+0j, 1+0j, 0+1j)}
-
+MOVES = {UP:    Move(P( 0,+1), P(0,+0), P(1,+0)),
+         DOWN:  Move(P( 0,-1), P(0,+1), P(1,+0)),
+         LEFT:  Move(P(+1,+0), P(0,+0), P(0,+1)),
+         RIGHT: Move(P(-1,+0), P(1,+0), P(0,+1)),
+         SKIP:  None}
 
 class SliderGame:
     
@@ -58,52 +58,60 @@ class SliderGame:
 
     def is_game_over(self):
         return not self.valid_moves()
-    
+
     def valid_moves(self):
-        
-        return [LEFT, RIGHT, UP, DOWN]
-        
+        v1 = self.valid_moves1()
+        v2 = self.valid_moves2()
+        if v1 != v2:
+            print(v1, v2)
+        return v2
+    
+    def valid_moves2(self):
         moves = set()
         if ALLOW_NOOP and sum(line.count(0) for line in self.field) >= CREATE_TURN:
             moves.add(SKIP)
 
         for line in self.field:
-            for i in range(1, len(line)):
-                if line[i-1] == line[i]:
-                    moves.add(LEFT)
-                    moves.add(RIGHT)
+            if any(line[i-1] == line[i] for i in range(1, len(line))):
+                moves.add(LEFT)
+                moves.add(RIGHT)
+            # FIXME this is not entirely correct... (same below)
             if any(line[i] == 0 for i in range(1, len(line))):
                 moves.add(RIGHT)
             if any(line[i] == 0 for i in range(len(line)-1)):
                 moves.add(LEFT)
                 
         for line in zip(*self.field):
-            for i in range(1, len(line)):
-                if line[i-1] == line[i]:
-                    moves.add(UP)
-                    moves.add(DOWN)
+            if any(line[i-1] == line[i] for i in range(1, len(line))):
+                moves.add(UP)
+                moves.add(DOWN)
             if any(line[i] == 0 for i in range(1, len(line))):
                 moves.add(DOWN)
             if any(line[i] == 0 for i in range(len(line)-1)):
                 moves.add(UP)
 
-        #~for move in MOVES:
-            #~new_field = self.update_field(move)
-            #~if new_field != self.field:
-                #~moves.add(move)
-                
-        return list(moves)
+        return sorted(moves)
+    
+    def valid_moves1(self):
+        moves = set()
+        for move in MOVES:
+            if ALLOW_NOOP or move != SKIP:
+                new_field = self.update_field(move)
+                if new_field != self.field:
+                    moves.add(move)
+        return sorted(moves)
         
     def apply_move(self, move):
         if move in self.valid_moves():
             self.turn += 1
+            
+            ref = self.update_field1(move)
+            res = self.update_field2(move)
+            if ref != res:
+                print(move, self.field)
+                
             self.merged = []
             self.field = self.update_field(move)
-            
-            #~ref = self.update_field1(move)
-            #~res = self.update_field2(move)
-            #~if ref != res:
-                #~print(move, self.field)
             
             self.spawn(CREATE_TURN)
             score = self.calculate_score()
@@ -132,31 +140,29 @@ class SliderGame:
         res = list(map(list, self.field))
         
         if move == SKIP: return res
-        m = MOVES2[move]
+        m = MOVES[move]
         
         for i in range(WIDTH):
-            p = (WIDTH-1) * m.start + i * m.delta
+            px = (WIDTH-1) * m.start.x + i * m.delta.x
+            py = (WIDTH-1) * m.start.y + i * m.delta.y
             
             last = None
             w = 0
             for r in range(WIDTH):
-                cur = arr_get(res, p + m.mdir * r)
-                if cur == 0:
-                    continue
-                elif cur == last:
-                    arr_set(res, p + m.mdir * w, last + 1)
-                    #~self.merged.append(last + 1)
-                    c = p + m.mdir * w
-                    self.merged.append((int(c.real), int(c.imag)))
-                    last = None
-                    w += 1
-                else:
-                    if last is not None:
-                        arr_set(res, p + m.mdir * w, last)
+                cur = res[py + m.mdir.y * r][px + m.mdir.x * r]
+                if cur != 0:
+                    wx, wy = px + m.mdir.x * w, py + m.mdir.y * w
+                    if cur == last:
+                        res[wy][wx] = last + 1
+                        self.merged.append((wx, wy))
+                        cur = None
+                        w += 1
+                    elif last is not None:
+                        res[wy][wx] = last
                         w += 1
                     last = cur
             for w in range(w, WIDTH):
-                arr_set(res, p + m.mdir * w, last or 0)
+                res[py + m.mdir.y * w][px + m.mdir.x * w] = last or 0
                 last = 0
                     
         return res
@@ -240,15 +246,6 @@ class SliderGame:
         print("SCORE", self.score)
         for line in self.field:
             print(*("%2d" % c for c in line))
-
-
-def arr_get(arr, p):
-    a, b = int(p.real), int(p.imag)
-    return arr[b][a]
-
-def arr_set(arr, p, v):
-    a, b = int(p.real), int(p.imag)
-    arr[b][a] = v
 
 
 def main():

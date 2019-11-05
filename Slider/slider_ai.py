@@ -17,11 +17,12 @@ def random_play(game):
         valid = game.valid_moves()
     return game.score, moves
 
-
+random.seed(0)
 NUM_GAMES = 10
 game = slider_model.SliderGame()
+k = 0
 while game.valid_moves():
-    
+    k += 1
     start = time.time()
     scores = {m: 0 for m in game.valid_moves()}
     
@@ -32,7 +33,10 @@ while game.valid_moves():
         scores[moves[0]] += score
             
     move = max(scores, key=scores.get)
-    print(move, score, time.time() - start)
+    print(k, move, score, time.time() - start)
     game.apply_move(move)
     game.show()
+    
+    if k > 10:
+        break
 
