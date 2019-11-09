@@ -1,6 +1,7 @@
 """ TODO
 - valid moves takes most time (by far) --> make it faster
 - check combination of new valid moves with old update_field
+- try some heuristic, e.g. minimum difference between adjacent cells
 """
 
 import slider_model
@@ -22,6 +23,7 @@ random.seed(0)
 NUM_GAMES = 10
 game = slider_model.SliderGame()
 k = 0
+START = time.time()
 while game.valid_moves():
     k += 1
     start = time.time()
@@ -41,3 +43,4 @@ while game.valid_moves():
     if k > 10:
         break
 
+print(time.time() - START)
