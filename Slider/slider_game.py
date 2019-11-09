@@ -1,6 +1,5 @@
 """
 TODO
-- highlight merged tiles
 - animation (still needed after highlighting?)
 - documentation
 - maybe allow undo once? or save/restore?

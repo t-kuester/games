@@ -4,6 +4,7 @@ make application of moves more efficient (for AI random plays)
 documentation
 wrap configuration into separate class or namedtuple
 problem when creating more than one but not enough space
+code cleanup, remove old, slower methods
 """
 
 import random
@@ -28,6 +29,13 @@ MOVES = {UP:    Move(P( 0,+1), P(0,+0), P(1,+0)),
          RIGHT: Move(P(-1,+0), P(1,+0), P(0,+1)),
          SKIP:  None}
 
+MOVES2 = {UP:    (( 0,+1), (0,+0), (1,+0)),
+         DOWN:  (( 0,-1), (0,+1), (1,+0)),
+         LEFT:  ((+1,+0), (0,+0), (0,+1)),
+         RIGHT: ((-1,+0), (1,+0), (0,+1)),
+         SKIP:  None}
+
+
 class SliderGame:
     
     def __init__(self):
@@ -39,6 +47,7 @@ class SliderGame:
         
         self.compress = self.compress4
         self.update_field = self.update_field2
+        self.valid_moves = self.valid_moves
     
     def new_random(self):
         n = 1
@@ -71,24 +80,30 @@ class SliderGame:
         if ALLOW_NOOP and sum(line.count(0) for line in self.field) >= CREATE_TURN:
             moves.add(SKIP)
 
+        # TODO generalize to one parameterized function
         for line in self.field:
-            if any(line[i-1] == line[i] for i in range(1, len(line))):
-                moves.add(LEFT)
+            if any(line[i-1] == line[i] != 0 for i in range(1, len(line))):
                 moves.add(RIGHT)
-            # FIXME this is not entirely correct... (same below)
-            if any(line[i] == 0 for i in range(1, len(line))):
-                moves.add(RIGHT)
-            if any(line[i] == 0 for i in range(len(line)-1)):
                 moves.add(LEFT)
+            else:
+                zeros = [i for i, e in enumerate(line) if e == 0]
+                if zeros:
+                    if any(e != 0 for i, e in enumerate(line) if i < zeros[-1]):
+                        moves.add(RIGHT)
+                    if any(e != 0 for i, e in enumerate(line) if i > zeros[0]):
+                        moves.add(LEFT)
                 
         for line in zip(*self.field):
-            if any(line[i-1] == line[i] for i in range(1, len(line))):
-                moves.add(UP)
+            if any(line[i-1] == line[i] != 0 for i in range(1, len(line))):
                 moves.add(DOWN)
-            if any(line[i] == 0 for i in range(1, len(line))):
-                moves.add(DOWN)
-            if any(line[i] == 0 for i in range(len(line)-1)):
                 moves.add(UP)
+            else:
+                zeros = [i for i, e in enumerate(line) if e == 0]
+                if zeros:
+                    if any(e != 0 for i, e in enumerate(line) if i < zeros[-1]):
+                        moves.add(DOWN)
+                    if any(e != 0 for i, e in enumerate(line) if i > zeros[0]):
+                        moves.add(UP)
 
         return sorted(moves)
     
@@ -105,10 +120,10 @@ class SliderGame:
         if move in self.valid_moves():
             self.turn += 1
             
-            ref = self.update_field1(move)
-            res = self.update_field2(move)
-            if ref != res:
-                print(move, self.field)
+            #~ref = self.update_field1(move)
+            #~res = self.update_field2(move)
+            #~if ref != res:
+                #~print(move, self.field)
                 
             self.merged = []
             self.field = self.update_field(move)
@@ -163,6 +178,40 @@ class SliderGame:
                     last = cur
             for w in range(w, WIDTH):
                 res[py + m.mdir.y * w][px + m.mdir.x * w] = last or 0
+                last = 0
+                    
+        return res
+        
+        
+    def update_field3(self, move):
+        res = self.field
+        # XXX FOR NOW, NOT IN-PLACE
+        #~res = list(map(list, self.field))
+        
+        if move == SKIP: return res
+        (mx,my),(sx,sy),(dx,dy) = MOVES2[move]
+        
+        for i in range(WIDTH):
+            px = (WIDTH-1) * sx + i * dx
+            py = (WIDTH-1) * sy + i * dy
+            
+            last = None
+            w = 0
+            for r in range(WIDTH):
+                cur = res[py + my * r][px + mx * r]
+                if cur != 0:
+                    wx, wy = px + mx * w, py + my * w
+                    if cur == last:
+                        res[wy][wx] = last + 1
+                        self.merged.append((wx, wy))
+                        cur = None
+                        w += 1
+                    elif last is not None:
+                        res[wy][wx] = last
+                        w += 1
+                    last = cur
+            for w in range(w, WIDTH):
+                res[py + my * w][px + mx * w] = last or 0
                 last = 0
                     
         return res

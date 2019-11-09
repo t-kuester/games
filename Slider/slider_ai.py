@@ -1,5 +1,6 @@
 """ TODO
 - valid moves takes most time (by far) --> make it faster
+- check combination of new valid moves with old update_field
 """
 
 import slider_model
