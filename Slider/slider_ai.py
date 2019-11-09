@@ -1,6 +1,5 @@
 """ TODO
 - valid moves takes most time (by far) --> make it faster
-- check combination of new valid moves with old update_field
 - try some heuristic, e.g. minimum difference between adjacent cells
 """
 
@@ -9,12 +8,12 @@ import time, random
 
 def random_play(game):
     first = random.choice(game.valid_moves())
-    game.apply_move(first)
+    game.apply_move(first, False)
     moves = [first]
     valid = game.valid_moves()
     while valid:
         m = random.choice(valid)
-        game.apply_move(m)
+        game.apply_move(m, False)
         moves.append(m)
         valid = game.valid_moves()
     return game.score, moves

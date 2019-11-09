@@ -36,8 +36,8 @@ class SliderGame:
         self.new = self.spawn(CREATE_START)
         self.merged = []
         
-        self.valid_moves = self.valid_moves
-        self.update_field = self.update_field
+        self.valid_moves = self.valid_moves2
+        self.update_field = self.update_field2
     
     def new_random(self):
         n = 1
@@ -98,8 +98,8 @@ class SliderGame:
                     moves.add(move)
         return sorted(moves)
         
-    def apply_move(self, move):
-        if move in self.valid_moves():
+    def apply_move(self, move, check_valid=True):
+        if not check_valid or move in self.valid_moves():
             self.turn += 1
             self.merged = []
             self.field = self.update_field(move)
@@ -134,7 +134,7 @@ class SliderGame:
     def update_field2(self, move):
         # XXX IN-PLACE OR NOT?
         res = self.field
-        res = list(map(list, self.field))
+        #~res = list(map(list, self.field))
         
         if move == SKIP: return res
         (mx,my),(sx,sy),(dx,dy) = MOVES[move]
@@ -150,8 +150,8 @@ class SliderGame:
                     wx, wy = px + mx * w, py + my * w
                     if cur == last:
                         res[wy][wx] = last + 1
-                        #~self.merged.append((wx, wy))
-                        self.merged.append(last + 1)
+                        self.merged.append((wx, wy))
+                        #~self.merged.append(last + 1)
                         cur = None
                         w += 1
                     elif last:
@@ -181,8 +181,8 @@ class SliderGame:
         return res
 
     def calculate_score(self):
-        return sum(2**m for m in self.merged)
-        #~return sum(2**self.field[y][x] for (x,y) in self.merged)
+        #~return sum(2**m for m in self.merged)
+        return sum(2**self.field[y][x] for (x,y) in self.merged)
     
     def show(self):
         print("SCORE", self.score)
