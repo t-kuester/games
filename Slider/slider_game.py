@@ -61,13 +61,13 @@ class SliderFrame(tk.Frame):
             for c, col in enumerate(row):
                 value = self.game.field[r][c]
                 bg = int(255 * 0.95**(value)) if value else 255
-                font = font_merged if (c, r) in self.game.merged else font
+                the_font = font_merged if (c, r) in self.game.merged else font
                 x, y = c*w, r*w
                 self.canvas.create_rectangle(x, y, x+w, y+w, fill='#%02X%02X%02X' % (bg, bg, bg),
                                              width=2 if (c, r) in self.game.new else 1)
                 if value != 0:
                     self.canvas.create_text(x+w/2, y+w/2, text=to_str(value), anchor="center",
-                                            font=font)
+                                            font=the_font)
         self.update_status()
 
     def update_status(self):
