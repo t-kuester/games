@@ -11,8 +11,8 @@ const char SYMBOLS[] = {'.', 'X', '#', 'O'};
  */
 
 struct board {
-    char meta[9];
-    char field[9][9];
+    int meta[9];
+    int field[9][9];
 };
 
 int idx_meta(int move) {
@@ -21,6 +21,14 @@ int idx_meta(int move) {
 
 int idx_inner(int move) {
     return ((move / 9) % 3) * 3 + ((move % 9) % 3);
+}
+
+int contains(int field[], int size, int symbol) {
+    int i;
+    for (i = 0; i < size; i++) {
+        if (field[i] == symbol) return 1;
+    }
+    return 0;
 }
 
 struct board* init_board() {
@@ -36,34 +44,31 @@ struct board* init_board() {
 }
 
 void copy(struct board *from, struct board *to) {
-    // TODO
+    // TODO use proper stringcopy function
+    int i, k;
+    for (i = 0; i < 9; i++) {
+        to->meta[i] = from->meta[i];
+        for (k = 0; k < 9; k++) {
+            to->field[i][k] = from->field[i][k];
+        }
+    }
 }
 
 void get_moves(struct board *b, int last, int moves[]) {
-    int i;
-    int R = (last / 9) % 3; // row of small field where to play
-    int C = (last % 9) % 3; // col of small field where to play
-    int active_field = R * 3 + C;
-    int any_field = b->meta[active_field] != NONE;
+    int active_field = ((last / 9) % 3) * 3 + ((last % 9) % 3);
+    int any_field = last == -1 || b->meta[active_field] != NONE;
     
+    int i;
     for (i = 0; i < 81; i++) {
-        //~int row = i / 9;
-        //~int row_meta = row / 3;
-        //~int row_inner = row % 3;
-        //~int col = i % 9;
-        //~int col_meta = col / 3;
-        //~int col_inner = col % 3;
-
-        int index_meta = idx_meta(i); // row_meta * 3 + col_meta;
-        int index_inner = idx_inner(i); // row_inner * 3 + col_inner;
-        
+        int index_meta = idx_meta(i);
+        int index_inner = idx_inner(i);
         int is_free = b->field[index_meta][index_inner] == NONE;
         int can_play = (index_meta == active_field) || any_field;
         moves[i] = is_free && can_play;
     }
 }
 
-int winning_draw(struct board *b, int player) {
+int winning_draw(int field[], int player) {
     return 0;
 	//~""" In case of no line, player with more smaller boards wins
 	//~"""
@@ -72,7 +77,7 @@ int winning_draw(struct board *b, int player) {
 	//~return player if (own > opp) else (-player if opp > own else 0)    
 }
 
-int winning(struct board *b, int player) {
+int winning(int field[], int player) {
     return 0;
 	//~""" check whether player has won the board, works for sub- or for meta board
 	//~"""
@@ -83,53 +88,37 @@ int winning(struct board *b, int player) {
 }
 
 void apply_move(struct board *b, int move, int player) {
+    int index_meta = idx_meta(move);
+    int index_inner = idx_inner(move);
     
-    //~int R = (last / 9) % 3; // row of small field where to play
-    //~int C = (last % 9) % 3; // col of small field where to play
-
+    b->field[index_meta][index_inner] = player;
     
-    
-	//~""" apply move; if player won smaller board, update meta board
-	//~"""
-	//~R, C = move[0] // 3, move[1] // 3
-	//~r, c = move[0] % 3, move[1] % 3
-	//~board = list(board)
-	//~board[R*3+C] = list(board[R*3+C])
-	//~subgrid = board[R*3+C]
-	//~
-	//~subgrid[r*3+c] = player
-	//~if winning(subgrid, player):
-		//~board[R*3+C] = player
-	//~elif not NONE in subgrid:
-		//~board[R*3+C] = DRAW
-	//~return board
+    if (winning(b->field[index_meta], player)) {
+        b->meta[index_meta] = player;
+    } else if (! contains(b->field[index_meta], 9, NONE)) {
+        b->meta[index_meta] = DRAW;
+    }
 }
 
 void show_grid(struct board *b) {
     int i;
     for (i = 0; i < 81; i++) {
-        int row = i / 9;
-        int row_meta = row / 3;
-        int row_inner = row % 3;
-        int col = i % 9;
-        int col_meta = col / 3;
-        int col_inner = col % 3;
-
-        if (row > 0 && row % 3 == 0 && col == 0) {
+        int row = i / 9, col = i % 9;
+        if ((row == 3 || row == 6) && col == 0) {
             printf("- - - + - - - + - - -\n");
         }
-        if (col > 0 && col % 3 == 0) {
+        if ( col == 3 || col == 6) {
             printf("| ");
         }
-        int index_meta = row_meta * 3 + col_meta;
-        int index_inner = row_inner * 3 + col_inner;
         
+        int index_meta = idx_meta(i);
+        int index_inner = idx_inner(i);
         int v_meta = b->meta[index_meta];
         int v_field = b->field[index_meta][index_inner];
         int v = v_meta != NONE ? v_meta : v_field;
         char sym = SYMBOLS[(v + 4) % 4];
-        //~printf("%c ", sym);
-        printf("%d ", v_field);
+        printf("%c ", sym);
+        //~printf("%d ", v_field);
             
         if ((col+1) % 9 == 0) {
             printf("\n");
@@ -211,7 +200,7 @@ int best_move_random_plays(struct board *b, int moves[], int player) {
 }
 
 int best_move(struct board *b, int moves[], int player) {
-    return 0;
+    return best_move_random_plays(b, moves, player);
 	//~""" return winning move, or best non-losing move, if any
 	//~"""
 	//~win_move = winning_move(board, moves, player)
@@ -250,19 +239,47 @@ int play_game() {
 		//~player = -player
 }
 
+int random_move(int moves[]) {
+    int n = 0;
+    int i;
+    for (i = 0; i < 81; i++) {
+        n += moves[i];
+    }
+    n = rand() % n;
+    for (i = 0; i < 81; i++) {
+        if (moves[i] && n-- == 0) return i;
+    }
+    return -1;
+}
+
 void test_board() {
     // init board, show empty grid
     struct board *b = init_board();
     show_grid(b);
     
-    int moves[81];
-    get_moves(b, 0, moves);
-    show_moves(moves);
-    
     // apply random moves, print move, show grid
-    
-    
-    // apply random valid moves
+    int moves[81];
+    int i;
+    int last = -1;
+    for (i = 0; i < 100; i++) {
+        printf("ROUND %d\n", i);
+        int player = i % 2 ? OWN : OPP;
+        
+        get_moves(b, last, moves);
+        printf("valid moves:\n");
+        show_moves(moves);
+        
+        if (contains(moves, 81,1) == 0) {
+            printf("No valid move\n");
+            break;
+        }
+        
+        int move = random_move(moves);
+        printf("playing move %d\n", move);
+        apply_move(b, move, player);
+        show_grid(b);
+        last = move;
+    }
 }
 
 int main() {
