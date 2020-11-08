@@ -28,17 +28,6 @@ added to each row and column of the grid. Levels are randomly generated, so no
 pretty pictures to uncover but just random noise. Again, grid size can be set
 to any size using command line parameters.
 
-Sokoban
--------
-This one is actually quite good... as usual, it has a super-minimalistic UI, but
-it can read arbitrary Sokoban level files and keep a record of what level has been
-solved in how many moves. Also, it featurse some amount of "planning", not only
-for finding the path to a certain location, but also for planning the "push-path" 
-for moving a single crate to a new location. This does not make the puzzles any 
-easier, but it makes the game much less tedious to play and more fun. Also 
-features basic undo and snapshot-taking. Levels are not included (didn't want 
-to bother with copyright stuff), but plenty can be found on the web.
-
 Sudoku
 ------
 While this one only comes with 50 pre-generated puzzles (taken from a Project 
