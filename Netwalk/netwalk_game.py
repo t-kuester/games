@@ -13,16 +13,16 @@ Controls:
 """
 
 from netwalk import Network
-import tkinter
+import tkinter as tk
 
 # some helper functions
 col_fg = lambda node: "blue" if node.connected else "black"
-col_bg = lambda node: "gray" if node.fixed else "white"
+col_bg = lambda node: "light gray" if node.fixed else "white"
 tag_fg = lambda node: "f%dx%d" % (node.x, node.y)
 tag_bg = lambda node: "b%dx%d" % (node.x, node.y)
 
 
-class NetwalkFrame(tkinter.Frame):
+class NetwalkFrame(tk.Frame):
 	"""Application Frame for Netwalk game.
 	
 	This frame consists of just two buttons for creating and re-scrambling the
@@ -30,26 +30,28 @@ class NetwalkFrame(tkinter.Frame):
 	done by parameters.
 	"""
 
-	def __init__(self, width=10, height=10, side=20, toroid=False):
+	def __init__(self, width=10, height=10, toroid=False):
 		"""Create Application Frame.
 		"""
-		tkinter.Frame.__init__(self, None)
+		tk.Frame.__init__(self, None)
 		self.master.title("Netwalk")
-		self.grid()
-		self.width, self.height, self.side = width, height, side
+		self.width, self.height = width, height
 		self.toroid = toroid
 		self.shift_h, self.shift_v = 0, 0
 		self.game = None
 		
+		self.pack(fill=tk.BOTH, expand=tk.YES)
+
 		# create button
-		button = tkinter.Button(self, text="NEW", relief="groove", command=self.new_game)
-		button.grid(row=0, column=0)
+		button = tk.Button(self, text="NEW", relief="groove", command=self.new_game)
+		button.pack(side=tk.TOP)
 		
 		# create network field
-		self.canvas = tkinter.Canvas(self, width=width*side, height=height*side, bg="white")
-		self.canvas.grid(row=1, column=0)
+		self.canvas = tk.Canvas(self, bg="white")
+		self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=tk.YES)
 		self.canvas.bind("<Button>", self.interact)
 		self.bind_all("<KeyPress>", self.shift)
+		self.bind("<Configure>", lambda _: self.draw_field())
 		self.new_game()
 		
 	def new_game(self):
@@ -63,17 +65,16 @@ class NetwalkFrame(tkinter.Frame):
 	def interact(self, event):
 		"""Interact with the clicked Node, either rotating or (un)fixing the node.
 		"""
+		side = self.get_cellwidth()
 		if 1 <= event.num <= 3:
-			col = (event.x // self.side - self.shift_h) % self.width
-			row = (event.y // self.side - self.shift_v) % self.height
+			col = (event.x // side - self.shift_h) % self.width
+			row = (event.y // side - self.shift_v) % self.height
 			node = self.game.nodes[row][col]
-			if event.num == 2:
+			if event.num == 3:
 				node.fixed = not node.fixed
 			else:
 				if event.num == 1:
 					node.rotate(False)
-				if event.num == 3:
-					node.rotate(True)
 				self.game.check()
 				self.update_colors()
 			self.draw_node(node)
@@ -97,16 +98,25 @@ class NetwalkFrame(tkinter.Frame):
 		for node in self.iterate_nodes():
 			self.draw_node(node)
 
+	def get_cellwidth(self):
+		"""Simple helper method for getting the optimal width for a cell.
+		"""
+		return min(
+			self.canvas.winfo_height() // self.height,
+			self.canvas.winfo_width()  // self.width
+        )
+
 	def draw_node(self, node):
 		"""Re-draw a single Node.
 		"""
 		self.canvas.delete(tag_fg(node))
 		self.canvas.delete(tag_bg(node))
 
-		# lengths		
+		# lengths
+		side = self.get_cellwidth()
 		col = (node.x + self.shift_h) % self.width
 		row = (node.y + self.shift_v) % self.height
-		s, s2, s3, s4 = (self.side / x for x in (1, 2, 3, 4))
+		s, s2, s3, s4 = (side / x for x in (1, 2, 3, 4))
 		x, y = col * s, row * s
 		x2, x3, x4 = (x + s for s in (s2, s3, s4))
 		y2, y3, y4 = (y + s for s in (s2, s3, s4))
@@ -129,13 +139,14 @@ class NetwalkFrame(tkinter.Frame):
 		"""More efficient method for moving the nodes by the given dx and dy,
 		swapping nodes leaving the network at one side to the other side.
 		"""
+		side = self.get_cellwidth()
 		for node in self.iterate_nodes():
 			col_old = (node.x + self.shift_h) % self.width
 			row_old = (node.y + self.shift_v) % self.height
 			col_new = (node.x + self.shift_h + dx) % self.width
 			row_new = (node.y + self.shift_v + dy) % self.height
-			move_x = (col_new - col_old) * self.side
-			move_y = (row_new - row_old) * self.side
+			move_x = (col_new - col_old) * side
+			move_y = (row_new - row_old) * side
 			self.canvas.move(tag_bg(node), move_x, move_y)
 			self.canvas.move(tag_fg(node), move_x, move_y)
 		self.shift_h += dx
@@ -175,5 +186,5 @@ if __name__ == "__main__":
 	except ValueError:
 		parser.error("Size must be a number between %d and %d" % (s_min, s_max))
 	else:
-		app = NetwalkFrame(width, height, 30, options.toroid)
+		app = NetwalkFrame(width, height, options.toroid)
 		app.mainloop()
