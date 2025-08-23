@@ -18,7 +18,7 @@ Mouse-Controls: left-click: mark as filled; right-click: mark as empty.
 Keyboard-Controls (only w/ cross-hair ): Arrow keys: move, f/e: mark full/empty
 """
 
-import tkinter, random, itertools
+import tkinter, random, itertools, tkinter.font
 
 class Nonogram(object):
 	"""Nonogram Data Class.
@@ -87,12 +87,14 @@ class NonogramFrame(tkinter.Frame):
 		button = tkinter.Button(self, text="NEW", relief="groove", command=self.new_game)
 		button.grid(row=0, column=0)
 		
+		font = tkinter.font.Font(size=12)
+		
 		# create labels
 		self.columns, self.rows = [], []
 		for n in range(size):
-			self.rows += [tkinter.Label(self)]
+			self.rows += [tkinter.Label(self, font=font)]
 			self.rows[n].grid(row=n+1, column=0, sticky="E")
-			self.columns += [tkinter.Label(self)]
+			self.columns += [tkinter.Label(self, font=font)]
 			self.columns[n].grid(row=0, column=n+1, sticky="S")
 		
 		# create central field
@@ -201,5 +203,5 @@ if __name__ == "__main__":
 	except ValueError:
 		parser.error("Size must be a number between 5 and 50")
 	else:
-		app = NonogramFrame(None, size, 20, options.cross)
+		app = NonogramFrame(None, size, 30, options.cross)
 		app.mainloop()
