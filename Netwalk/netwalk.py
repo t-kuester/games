@@ -20,8 +20,8 @@ class Node:
 	a fixed/unfixed and connectedness states.
 	"""
 
-	def __init__(self, x, y):
-		"""Create Node intance at position (x, y).
+	def __init__(self, x: int, y: int):
+		"""Create Node instance at position (x, y).
 		"""
 		self.x = x
 		self.y = y
@@ -120,7 +120,7 @@ class Network:
 				if s * -1 in other.connections and not other.connected:
 					fringe.append(other)
 
-	def xymod(self, x, y, c):
+	def xymod(self, x: int, y: int, c: complex) -> tuple[int, int]:
 		"""Return (x, y) plus other side (complex), module width/height if toroid.
 		"""
 		x2, y2 = x + int(c.real), y + int(c.imag)

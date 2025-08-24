@@ -12,7 +12,7 @@ Controls:
 - arrow keys to wrap the grid around the edges (in toroid mode)
 """
 
-from netwalk import Network
+from netwalk import Network, Node
 import tkinter as tk
 
 # some helper functions
@@ -49,8 +49,8 @@ class NetwalkFrame(tk.Frame):
 		# create network field
 		self.canvas = tk.Canvas(self, bg="white")
 		self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=tk.YES)
-		self.canvas.bind("<Button>", self.interact)
-		self.bind_all("<KeyPress>", self.shift)
+		self.canvas.bind("<Button>", self.on_mouse)
+		self.bind_all("<KeyPress>", self.on_key)
 		self.bind("<Configure>", lambda _: self.draw_field())
 		self.new_game()
 		
@@ -62,7 +62,7 @@ class NetwalkFrame(tk.Frame):
 		self.game.check()
 		self.draw_field()
 		
-	def interact(self, event):
+	def on_mouse(self, event):
 		"""Interact with the clicked Node, either rotating or (un)fixing the node.
 		"""
 		side = self.get_cellwidth()
@@ -79,7 +79,7 @@ class NetwalkFrame(tk.Frame):
 				self.update_colors()
 			self.draw_node(node)
 	
-	def shift(self, event):
+	def on_key(self, event):
 		"""When in 'toroid' mode, shift the viewport by one Node to N/E/S/W.
 		"""
 		if self.toroid:
@@ -98,7 +98,7 @@ class NetwalkFrame(tk.Frame):
 		for node in self.iterate_nodes():
 			self.draw_node(node)
 
-	def get_cellwidth(self):
+	def get_cellwidth(self) -> int:
 		"""Simple helper method for getting the optimal width for a cell.
 		"""
 		return min(
@@ -106,7 +106,7 @@ class NetwalkFrame(tk.Frame):
 			self.canvas.winfo_width()  // self.width
         )
 
-	def draw_node(self, node):
+	def draw_node(self, node: Node):
 		"""Re-draw a single Node.
 		"""
 		self.canvas.delete(tag_fg(node))
@@ -135,7 +135,7 @@ class NetwalkFrame(tk.Frame):
 		if len(node.connections) == 1:
 			self.canvas.create_oval(x3, y3, x3+s3, y3+s3, **options)
 
-	def move_nodes(self, dx, dy):
+	def move_nodes(self, dx: int, dy: int):
 		"""More efficient method for moving the nodes by the given dx and dy,
 		swapping nodes leaving the network at one side to the other side.
 		"""
@@ -164,10 +164,9 @@ class NetwalkFrame(tk.Frame):
 		for row in range(self.height):
 			for col in range(self.width):
 				yield self.game.nodes[row][col]
-				
 
-# start application
-if __name__ == "__main__":
+
+def main():
 	s_def = 15
 	s_min = 5
 	s_max = 35
@@ -188,3 +187,8 @@ if __name__ == "__main__":
 	else:
 		app = NetwalkFrame(width, height, options.toroid)
 		app.mainloop()
+
+
+# start application
+if __name__ == "__main__":
+    main()
