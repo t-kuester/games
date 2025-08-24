@@ -82,6 +82,10 @@ class NetwalkFrame(tk.Frame):
 	def on_key(self, event):
 		"""When in 'toroid' mode, shift the viewport by one Node to N/E/S/W.
 		"""
+		if event.keysym == "q":
+			self.master.destroy()
+		if event.keysym == "n":
+			self.new_game()
 		if self.toroid:
 			if event.keysym == "Right":
 				self.move_nodes(-1, 0)
@@ -95,6 +99,7 @@ class NetwalkFrame(tk.Frame):
 	def draw_field(self):
 		"""Re-draw the entire network field.
 		"""
+		self.update()
 		for node in self.iterate_nodes():
 			self.draw_node(node)
 
