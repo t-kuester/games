@@ -28,6 +28,8 @@ class Node:
 		self.connections = set([])
 		self.fixed = False
 		self.connected = False
+		self.dangling = False
+		self.circle = False
 	
 	def rotate(self, counterclockwise=False):
 		"""Rotate the node, changing its connections accordingly.
@@ -101,6 +103,9 @@ class Network:
 		for line in self.nodes:
 			for node in line:
 				node.connected = False
+				node.circle = False
+				node.dangling = False
+
 		# starting from hub, reconnect connected nodes
 		fringe = [self.hub]
 		while fringe:
@@ -114,11 +119,19 @@ class Network:
 			           (0 <= x+s.real < self.width and 0 <= y+s.imag < self.height)]
 
 			# move connected neighbors to fringe
+			adj_connected = 0
 			for s in sides:
 				x2, y2 = self.xymod(x, y, s)
 				other = self.nodes[y2][x2]
-				if s * -1 in other.connections and not other.connected:
-					fringe.append(other)
+				if s * -1 in other.connections:
+					if other.connected:
+						adj_connected += 1
+					else:
+						fringe.append(other)
+				else:
+					node.dangling = True
+			if adj_connected >= 2:
+				node.circle = True
 
 	def xymod(self, x: int, y: int, c: complex) -> tuple[int, int]:
 		"""Return (x, y) plus other side (complex), module width/height if toroid.

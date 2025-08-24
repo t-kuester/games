@@ -16,10 +16,18 @@ from netwalk import Network, Node
 import tkinter as tk
 
 # some helper functions
-col_fg = lambda node: "blue" if node.connected else "black"
-col_bg = lambda node: "light gray" if node.fixed else "white"
 tag_fg = lambda node: "f%dx%d" % (node.x, node.y)
 tag_bg = lambda node: "b%dx%d" % (node.x, node.y)
+
+def col_fg(node: Node) -> str:
+	if node.circle: return "dark red"
+	if node.dangling: return "orange"
+	if node.connected: return "blue"
+	return "black"
+
+def col_bg(node: Node) -> str:
+	if node.fixed: return "light gray"
+	return "white"
 
 
 class NetwalkFrame(tk.Frame):
